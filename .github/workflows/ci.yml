@@ -30,6 +30,9 @@ jobs:
       - name: Vérifier le style
         run: npm run lint
 
+      - name: Générer les types de routes Next.js
+        run: npx next typegen
+
       - name: Vérifier les types
         run: npx tsc --noEmit
 
