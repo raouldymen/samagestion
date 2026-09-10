@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Qualité et build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Vérifier le style
+        run: npm run lint
+
+      - name: Vérifier les types
+        run: npx tsc --noEmit
+
+      - name: Exécuter les tests unitaires
+        run: npm test
+
+      - name: Compiler l'application
+        run: npm run build
+
+  rls-integration:
+    name: Isolation RLS multi-comptes
+    needs: quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Installer la CLI Supabase
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Démarrer Supabase local
+        run: supabase start
+
+      - name: Réinitialiser la base et appliquer les migrations
+        run: supabase db reset --local
+
+      - name: Exécuter les tests RLS
+        shell: bash
+        run: |
+          set -a
+          source <(supabase status --output env)
+          set +a
+          NEXT_PUBLIC_SUPABASE_URL="$API_URL" \
+          NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          PAYMENT_WEBHOOK_SECRET="ci-webhook-secret" \
+          npm run test:rls
