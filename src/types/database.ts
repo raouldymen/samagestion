@@ -1040,6 +1040,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_admins: {
+        Row: {
+          user_id: string;
+          granted_at: string;
+          granted_by: string | null;
+          notes: string | null;
+        };
+        Insert: {
+          user_id: string;
+          granted_at?: string;
+          granted_by?: string | null;
+          notes?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          granted_at?: string;
+          granted_by?: string | null;
+          notes?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -1400,6 +1421,10 @@ export type Database = {
       member_role_for: {
         Args: { p_business_id: string };
         Returns: string;
+      };
+      is_platform_admin: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
       };
       set_mock_payments_enabled: {
         Args: { p_enabled: boolean };

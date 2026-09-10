@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { mapAuthError } from "@/lib/auth/errors";
-import { getFirstMembership, getRequestOrigin } from "@/lib/auth/session";
+import { getFirstMembership, getPostAuthPath, getRequestOrigin } from "@/lib/auth/session";
 import { validateLogin, validateRegister } from "@/lib/auth/validation";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
@@ -79,7 +79,7 @@ export async function signIn(
       redirect(safeNext);
     }
 
-    redirect(membership?.kind === "active" ? "/dashboard" : "/onboarding");
+    redirect(await getPostAuthPath(supabase, userId, membership));
   } catch (caught) {
     if (isRedirectError(caught)) {
       throw caught;

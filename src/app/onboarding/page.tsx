@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { OnboardingForm } from "@/components/onboarding/onboarding-form";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
+import { isPlatformAdmin } from "@/lib/admin/access";
 
 export const metadata: Metadata = {
   title: "Configurer votre activité",
 };
 
-export default function OnboardingPage() {
+export default async function OnboardingPage() {
+  if (await isPlatformAdmin()) {
+    redirect("/admin/payments");
+  }
+
   return (
     <Card className="p-6 sm:p-8">
       <div className="mb-6 flex flex-col items-center text-center">

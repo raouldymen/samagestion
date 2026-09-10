@@ -1,10 +1,9 @@
-import { notFound } from "next/navigation";
+import { requirePlatformAdmin } from "@/lib/admin/access";
 
 /**
- * Zone admin plateforme — non exposée en V1.
- * notFound() plutôt qu'un redirect : ne révèle pas l'existence d'une zone admin.
+ * Zone plateforme séparée des commerces. Les utilisateurs non autorisés reçoivent 404.
  */
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  void children;
-  notFound();
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await requirePlatformAdmin();
+  return children;
 }

@@ -127,6 +127,30 @@ export async function getFirstMembership(supabase: TypedClient, userId: string):
   return null;
 }
 
+export async function getPostAuthPath(
+  supabase: TypedClient,
+  userId: string,
+  membership?: MembershipLookup,
+) {
+  const resolved =
+    membership === undefined ? await getFirstMembership(supabase, userId) : membership;
+
+  if (resolved?.kind === "suspended") {
+    return "/suspended";
+  }
+
+  const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+  if (isAdmin === true) {
+    return "/admin/payments";
+  }
+
+  if (resolved?.kind === "active") {
+    return "/dashboard";
+  }
+
+  return "/onboarding";
+}
+
 export async function getAppUser(supabase: TypedClient, user: User) {
   const { data: profile } = await supabase
     .from("profiles")

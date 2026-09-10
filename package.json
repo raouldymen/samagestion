@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test src/lib/products/products.test.ts src/lib/sales/sales.test.ts src/lib/finance/summary.test.ts src/lib/expenses/expenses.test.ts src/lib/purchases/purchases.test.ts src/lib/reports/reports.test.ts src/lib/notifications/notifications.test.ts src/lib/team/team.test.ts src/lib/settings/settings.test.ts src/lib/subscriptions/subscriptions.test.ts src/lib/payments/payments.test.ts src/lib/customers/customers.test.ts src/lib/security/security.test.ts src/lib/security/rate-limit.test.ts src/lib/auth/origin.test.ts",
-    "test:rls": "tsx scripts/live-rls-multitenant.ts"
+    "test:rls": "tsx scripts/live-rls-multitenant.ts",
+    "admin:create": "tsx --env-file=.env.local scripts/create-platform-admin.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.5",

@@ -73,7 +73,8 @@ business_subscriptions → subscription_plans → subscription_plan_features
 ## Paiements & webhooks
 
 - Montant / devise / plan lus en base au checkout.
-- `PAYMENT_WEBHOOK_SECRET` obligatoire (fail-closed : signature invalide ou secret absent → rejet).
+- `PAYMENT_WEBHOOK_SECRET` obligatoire pour le mock (fail-closed : signature invalide ou secret absent → rejet).
+- PayDunya : IPN vérifié par hash SHA-512 de la Master Key, puis `GET confirm/{token}` avant `confirm_subscription_payment`.
 - Webhooks : idempotence sur la transaction ; montant / devise / environnement vérifiés en SQL.
 - Mock : `confirm_mock_test_payment` et `set_mock_payments_enabled` = **service_role** ; flag `payment_settings.mock_payments_enabled` (défaut `false`).
 - Une transaction d’un commerce A ne peut pas activer le commerce B.
@@ -104,7 +105,17 @@ Voir `.env.example`. Secrets jamais commités (`.env*` ignoré sauf `.env.exampl
 
 ## Admin
 
-`/admin/*` : layout `notFound()` en V1 (pas de redirect vers le dashboard — ne révèle pas l’existence d’une zone admin).
+Les administrateurs de plateforme sont dans l'allowlist `platform_admins`, séparée de `business_members` : ils n'obtiennent donc aucun accès implicite aux données d'un commerce.
+
+- `/admin/*` vérifie `is_platform_admin()` et répond `404` aux autres utilisateurs.
+- `platform_admins` n'est pas lisible ni modifiable par `authenticated` ; son attribution passe exclusivement par `service_role`.
+- Pour désigner le premier administrateur :
+
+```bash
+npm run admin:create
+# ou
+PLATFORM_ADMIN_EMAIL=toi@exemple.com npm run admin:create
+```
 
 ## Rate limiting
 
