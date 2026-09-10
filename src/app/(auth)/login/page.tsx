@@ -1,0 +1,42 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { LoginForm } from "@/components/auth/login-form";
+import { Card } from "@/components/ui/card";
+import { Logo } from "@/components/ui/logo";
+
+export const metadata: Metadata = {
+  title: "Connexion",
+};
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const params = await searchParams;
+  const next = params.next?.startsWith("/invitations/") ? params.next : "";
+
+  return (
+    <Card className="p-6 sm:p-8">
+      <div className="mb-6 flex flex-col items-center text-center">
+        <Logo href="/" />
+        <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
+          Bienvenue sur SamaGestion
+        </h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Gérez votre activité simplement.
+        </p>
+      </div>
+      <LoginForm next={next} />
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Vous n&apos;avez pas encore de compte ?{" "}
+        <Link
+          href="/register"
+          className="font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+        >
+          Créer un compte
+        </Link>
+      </p>
+    </Card>
+  );
+}

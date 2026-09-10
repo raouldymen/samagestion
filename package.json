@@ -1,0 +1,34 @@
+{
+  "name": "samagestion",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "tsx --test src/lib/products/products.test.ts src/lib/sales/sales.test.ts src/lib/finance/summary.test.ts src/lib/expenses/expenses.test.ts src/lib/purchases/purchases.test.ts src/lib/reports/reports.test.ts src/lib/notifications/notifications.test.ts src/lib/team/team.test.ts src/lib/settings/settings.test.ts src/lib/subscriptions/subscriptions.test.ts src/lib/payments/payments.test.ts src/lib/customers/customers.test.ts src/lib/security/security.test.ts src/lib/security/rate-limit.test.ts src/lib/auth/origin.test.ts",
+    "test:rls": "tsx scripts/live-rls-multitenant.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.5",
+    "@supabase/supabase-js": "^2.112.4",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.34.0",
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.3",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.12",
+    "typescript": "^5"
+  }
+}
