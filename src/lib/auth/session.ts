@@ -2,6 +2,7 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
+import { isUserPlatformAdmin } from "@/lib/admin/access";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { resolveAuthOrigin } from "@/lib/auth/origin";
@@ -139,8 +140,7 @@ export async function getPostAuthPath(
     return "/suspended";
   }
 
-  const { data: isAdmin } = await supabase.rpc("is_platform_admin");
-  if (isAdmin === true) {
+  if (await isUserPlatformAdmin(userId)) {
     return "/admin/payments";
   }
 
