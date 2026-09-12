@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,15 @@ import { inviteMemberAction } from "@/lib/team/actions";
 import { ROLE_LABELS } from "@/lib/team/labels";
 
 export function InviteMemberDialog() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(inviteMemberAction, { error: null });
+
+  useEffect(() => {
+    if (state.success) {
+      router.refresh();
+    }
+  }, [state.success, router]);
 
   return (
     <>
@@ -22,7 +30,8 @@ export function InviteMemberDialog() {
         {state.success ? (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
-              Invitation envoyée. Partagez le lien affiché dans la liste des invitations.
+              {state.message ??
+                "Invitation envoyée. Le lien apparaît dans la liste des invitations."}
             </p>
             <div className="flex justify-end">
               <Button type="button" onClick={() => setOpen(false)}>

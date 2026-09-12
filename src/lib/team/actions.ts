@@ -12,6 +12,14 @@ import { validateInvitationForm } from "@/lib/team/validation";
 import { createClient } from "@/lib/supabase/server";
 import type { AuthResult } from "@/types";
 
+function mapInviteError(error: unknown) {
+  const subscriptionMessage = mapSubscriptionError(error);
+  if (subscriptionMessage !== "Une erreur est survenue. Veuillez réessayer.") {
+    return subscriptionMessage;
+  }
+  return mapTeamError(error);
+}
+
 function revalidateTeam(memberId?: string) {
   revalidatePath("/team");
   revalidatePath("/team/activity");
@@ -44,10 +52,7 @@ export async function inviteMemberAction(
 
     if (rpcError) {
       return {
-        error:
-          mapSubscriptionError(rpcError) !== "Une erreur est survenue. Veuillez réessayer."
-            ? mapSubscriptionError(rpcError)
-            : mapTeamError(rpcError),
+        error: mapInviteError(rpcError),
         fieldErrors,
       };
     }
@@ -59,7 +64,7 @@ export async function inviteMemberAction(
       throw caught;
     }
 
-    return { error: mapTeamError(caught) };
+    return { error: mapInviteError(caught), fieldErrors };
   }
 }
 
@@ -89,7 +94,7 @@ export async function updateMemberRoleAction(
       throw caught;
     }
 
-    return { error: mapTeamError(caught) };
+    return { error: mapInviteError(caught) };
   }
 }
 
@@ -120,7 +125,7 @@ export async function setMemberStatusAction(formData: FormData): Promise<AuthRes
       throw caught;
     }
 
-    return { error: mapTeamError(caught) };
+    return { error: mapInviteError(caught) };
   }
 }
 
@@ -145,7 +150,7 @@ export async function removeMemberAction(formData: FormData): Promise<AuthResult
       throw caught;
     }
 
-    return { error: mapTeamError(caught) };
+    return { error: mapInviteError(caught) };
   }
 }
 
@@ -173,7 +178,7 @@ export async function resendInvitationAction(
       throw caught;
     }
 
-    return { error: mapTeamError(caught) };
+    return { error: mapInviteError(caught) };
   }
 }
 
@@ -204,7 +209,7 @@ export async function acceptInvitationAction(
       throw caught;
     }
 
-    return { error: mapTeamError(caught) };
+    return { error: mapInviteError(caught) };
   }
 }
 
@@ -233,6 +238,6 @@ export async function declineInvitationAction(
       throw caught;
     }
 
-    return { error: mapTeamError(caught) };
+    return { error: mapInviteError(caught) };
   }
 }

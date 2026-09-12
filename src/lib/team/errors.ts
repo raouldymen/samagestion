@@ -49,7 +49,9 @@ export function mapTeamError(error: unknown): string {
     return "Votre session a expiré. Veuillez vous reconnecter.";
   }
 
-  if (message.includes("failed to fetch") || message.includes("network") || message.includes("fetch")) {
+  if (message.includes("gen_random_bytes")) {
+    return "Impossible de créer l'invitation. Réessayez.";
+  }
     return "Impossible de joindre le serveur. Vérifiez votre connexion internet.";
   }
 
