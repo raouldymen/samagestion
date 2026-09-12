@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 
@@ -14,10 +15,10 @@ const markSizes = {
   lg: "size-12",
 } as const;
 
-const wordmarkSizes = {
-  sm: "text-base",
-  md: "text-lg",
-  lg: "text-2xl",
+const logoSizes = {
+  sm: "h-8 w-[96px]",
+  md: "h-10 w-[120px]",
+  lg: "h-14 w-[168px]",
 } as const;
 
 function Mark({ size }: { size: keyof typeof markSizes }) {
@@ -44,17 +45,18 @@ export function Logo({
 }: LogoProps) {
   const content = (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <Mark size={size} />
       {showWordmark ? (
-        <span
-          className={cn(
-            "font-semibold tracking-tight text-foreground",
-            wordmarkSizes[size],
-          )}
-        >
-          SamaGestion
-        </span>
-      ) : null}
+        <Image
+          src="/brand/samagestion-logo.png"
+          alt="SamaGestion"
+          width={2172}
+          height={724}
+          priority={size === "lg"}
+          className={cn("object-contain object-left", logoSizes[size])}
+        />
+      ) : (
+        <Mark size={size} />
+      )}
     </span>
   );
 

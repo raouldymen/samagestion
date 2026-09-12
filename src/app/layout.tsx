@@ -15,6 +15,20 @@ export const metadata: Metadata = {
   },
   description:
     "Gérez votre activité simplement. Application de gestion pour commerçants et entrepreneurs en Afrique francophone.",
+  applicationName: "SamaGestion",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "SamaGestion",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport = {
