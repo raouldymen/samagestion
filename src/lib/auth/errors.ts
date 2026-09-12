@@ -41,6 +41,17 @@ export function mapAuthError(error: unknown): string {
     return "Le nom du commerce est obligatoire.";
   }
 
+  if (
+    message.includes("provider is not enabled") ||
+    message.includes("unsupported provider")
+  ) {
+    return "La connexion Google n'est pas encore activée.";
+  }
+
+  if (message.includes("oauth") || message.includes("access_denied")) {
+    return "La connexion Google a été annulée ou a échoué. Réessayez.";
+  }
+
   return "Une erreur est survenue. Veuillez réessayer.";
 }
 

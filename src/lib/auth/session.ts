@@ -189,6 +189,7 @@ export async function getAppUser(supabase: TypedClient, user: User) {
   const fullName =
     profile?.full_name ||
     (typeof metadata.full_name === "string" ? metadata.full_name : "") ||
+    (typeof metadata.name === "string" ? metadata.name : "") ||
     user.email ||
     "Utilisateur";
 

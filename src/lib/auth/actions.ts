@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { mapAuthError } from "@/lib/auth/errors";
+import { safePostAuthNext } from "@/lib/auth/paths";
 import { getFirstMembership, getPostAuthPath, getRequestOrigin } from "@/lib/auth/session";
 import { validateLogin, validateRegister } from "@/lib/auth/validation";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -68,8 +69,7 @@ export async function signIn(
 
     const userId = data.user.id;
     const membership = await getFirstMembership(supabase, userId);
-    const next = String(formData.get("next") ?? "");
-    const safeNext = next.startsWith("/invitations/") ? next : "";
+    const safeNext = safePostAuthNext(String(formData.get("next") ?? ""));
 
     if (membership?.kind === "suspended") {
       redirect("/suspended");
@@ -191,6 +191,53 @@ export async function signOut() {
   }
 
   redirect("/login");
+}
+
+export async function signInWithGoogle(
+  _prev: AuthResult,
+  formData: FormData,
+): Promise<AuthResult> {
+  if (!isSupabaseConfigured()) {
+    return { error: AUTH_NOT_CONFIGURED };
+  }
+
+  const limited = await enforceAuthRateLimit("login");
+  if (limited) {
+    return limited;
+  }
+
+  try {
+    const supabase = await createClient();
+    const origin = await getRequestOrigin();
+    const safeNext = safePostAuthNext(String(formData.get("next") ?? ""));
+    const redirectTo = safeNext
+      ? `${origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
+      : `${origin}/auth/callback`;
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+        queryParams: {
+          access_type: "offline",
+          prompt: "select_account",
+        },
+      },
+    });
+
+    if (error || !data.url) {
+      return { error: mapAuthError(error ?? new Error("oauth")) };
+    }
+
+    redirect(data.url);
+  } catch (caught) {
+    if (isRedirectError(caught)) {
+      throw caught;
+    }
+
+    return { error: mapAuthError(caught) };
+  }
 }
 
 function isRedirectError(error: unknown) {

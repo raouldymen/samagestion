@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AuthDivider, GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { LoginForm } from "@/components/auth/login-form";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
+import { safePostAuthNext } from "@/lib/auth/paths";
 
 export const metadata: Metadata = {
   title: "Connexion",
@@ -11,10 +13,11 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const next = params.next?.startsWith("/invitations/") ? params.next : "";
+  const next = safePostAuthNext(params.next);
+  const oauthFailed = params.error === "oauth";
 
   return (
     <Card className="p-6 sm:p-8">
@@ -26,6 +29,15 @@ export default async function LoginPage({
         <p className="mt-1.5 text-sm text-muted-foreground">
           Gérez votre activité simplement.
         </p>
+      </div>
+      {oauthFailed ? (
+        <p role="alert" className="mb-4 text-sm text-danger">
+          La connexion Google a échoué. Réessayez.
+        </p>
+      ) : null}
+      <div className="mb-4 flex flex-col gap-4">
+        <GoogleSignInButton next={next} />
+        <AuthDivider />
       </div>
       <LoginForm next={next} />
       <p className="mt-6 text-center text-sm text-muted-foreground">

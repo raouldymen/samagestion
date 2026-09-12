@@ -30,3 +30,16 @@ export function isProtectedPath(pathname: string) {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
+
+/** Redirection post-auth autorisée (invitation uniquement). */
+export function safePostAuthNext(value: string | null | undefined) {
+  if (!value || !value.startsWith("/invitations/")) {
+    return "";
+  }
+
+  if (value.includes("://") || value.includes("\\") || value.includes("//")) {
+    return "";
+  }
+
+  return value;
+}

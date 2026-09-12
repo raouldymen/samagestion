@@ -32,7 +32,28 @@ supabase db push
 
 Si vous utilisez l’éditeur SQL Supabase, exécutez chaque fichier de migration dans l’ordre de son préfixe numérique. Ne vous limitez pas à la migration initiale : les migrations suivantes ajoutent notamment les produits, ventes, dépenses, achats, abonnements, paiements et correctifs de sécurité.
 
-Dans Authentication → URL Configuration, ajoutez `http://localhost:3000/auth/callback` aux Redirect URLs.
+Dans Authentication → URL Configuration, ajoutez `http://localhost:3000/auth/callback` (et l’URL Vercel `/auth/callback` en production) aux Redirect URLs.
+
+### Connexion Google
+
+1. Google Cloud Console → APIs & Services → Credentials → **OAuth 2.0 Client ID** (type Application Web).
+2. URI de redirection autorisée : `https://uwkcmrudntnslegqjfxy.supabase.co/auth/v1/callback`.
+3. Dans Supabase → Authentication → Providers → **Google** : activer, coller Client ID et Client Secret.
+4. Option recommandée : Authentication → Settings → activer le **lien automatique** des identités pour le même e-mail (compte mot de passe + Google).
+
+## Paiements
+
+Par défaut `PAYMENT_PROVIDER=mock` (simulation Wave / Orange Money). Pour un débit réel via PayDunya :
+
+```env
+PAYMENT_PROVIDER=paydunya
+PAYMENT_ENV=test
+PAYDUNYA_MASTER_KEY=
+PAYDUNYA_PRIVATE_KEY=test_private_...
+PAYDUNYA_TOKEN=
+```
+
+Callback IPN : `https://votre-domaine/api/webhooks/payments`.
 
 ## Scripts
 

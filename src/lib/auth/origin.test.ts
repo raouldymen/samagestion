@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { resolveAuthOrigin } from "./origin";
+import { safePostAuthNext } from "./paths";
 
 const siteUrl = "https://app.samagestion.example";
 
@@ -48,5 +49,14 @@ describe("origine des liens d'authentification", () => {
       }),
       siteUrl,
     );
+  });
+});
+
+describe("redirection post-auth", () => {
+  it("n'accepte que les liens d'invitation internes", () => {
+    assert.equal(safePostAuthNext("/invitations/abc"), "/invitations/abc");
+    assert.equal(safePostAuthNext("/dashboard"), "");
+    assert.equal(safePostAuthNext("https://evil.example/invitations/x"), "");
+    assert.equal(safePostAuthNext("/invitations//bypass"), "");
   });
 });

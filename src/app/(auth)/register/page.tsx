@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AuthDivider, GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { RegisterForm } from "@/components/auth/register-form";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
@@ -19,6 +20,10 @@ export default function RegisterPage() {
         <p className="mt-1.5 text-sm text-muted-foreground">
           Commencez à gérer votre activité en quelques minutes.
         </p>
+      </div>
+      <div className="mb-4 flex flex-col gap-4">
+        <GoogleSignInButton />
+        <AuthDivider />
       </div>
       <RegisterForm />
       <p className="mt-6 text-center text-sm text-muted-foreground">
