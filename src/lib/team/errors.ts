@@ -49,9 +49,23 @@ export function mapTeamError(error: unknown): string {
     return "Votre session a expiré. Veuillez vous reconnecter.";
   }
 
+  if (message.includes("service_role_not_configured")) {
+    return "L'ajout de membres n'est pas configuré. Contactez le support.";
+  }
+
   if (message.includes("gen_random_bytes")) {
     return "Impossible de créer l'invitation. Réessayez.";
   }
+
+  if (
+    message.includes("password should be") ||
+    message.includes("password is too short") ||
+    message.includes("weak_password")
+  ) {
+    return "Le mot de passe doit contenir au moins 8 caractères.";
+  }
+
+  if (message.includes("failed to fetch") || message.includes("fetch failed")) {
     return "Impossible de joindre le serveur. Vérifiez votre connexion internet.";
   }
 

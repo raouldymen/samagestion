@@ -91,6 +91,32 @@ async function loadBusiness(supabase: TypedClient, businessId: string) {
 }
 
 export async function getFirstMembership(supabase: TypedClient, userId: string): Promise<MembershipLookup> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("current_business_id")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const preferredBusinessId = profile?.current_business_id;
+
+  if (preferredBusinessId) {
+    const { data: preferredMember } = await supabase
+      .from("business_members")
+      .select("role, status, business_id")
+      .eq("user_id", userId)
+      .eq("business_id", preferredBusinessId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (preferredMember && isBusinessRole(preferredMember.role)) {
+      const business = await loadBusiness(supabase, preferredMember.business_id);
+
+      if (business) {
+        return { kind: "active", role: preferredMember.role, business };
+      }
+    }
+  }
+
   const { data: activeMember, error: activeError } = await supabase
     .from("business_members")
     .select("role, status, business_id")

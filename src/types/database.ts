@@ -207,6 +207,7 @@ export type Database = {
           full_name: string | null;
           phone: string | null;
           avatar_url: string | null;
+          current_business_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -215,6 +216,7 @@ export type Database = {
           full_name?: string | null;
           phone?: string | null;
           avatar_url?: string | null;
+          current_business_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -223,6 +225,7 @@ export type Database = {
           full_name?: string | null;
           phone?: string | null;
           avatar_url?: string | null;
+          current_business_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1433,6 +1436,10 @@ export type Database = {
       invite_business_member: {
         Args: { p_email: string; p_role: string };
         Returns: InvitationRow;
+      };
+      add_business_member_direct: {
+        Args: { p_user_id: string; p_role: string };
+        Returns: Database["public"]["Tables"]["business_members"]["Row"];
       };
       get_invitation_by_token: {
         Args: { p_token: string };

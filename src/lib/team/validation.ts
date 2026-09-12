@@ -5,6 +5,9 @@ import type { FieldErrors } from "@/types";
 export function validateInvitationForm(formData: FormData) {
   const email = readString(formData, "email").toLowerCase();
   const role = readString(formData, "role");
+  const fullName = readString(formData, "fullName");
+  const password = readString(formData, "password");
+  const confirmPassword = readString(formData, "confirmPassword");
   const fieldErrors: FieldErrors = {};
 
   if (!email) {
@@ -19,8 +22,20 @@ export function validateInvitationForm(formData: FormData) {
     fieldErrors.role = "Ce rôle n'est pas disponible.";
   }
 
+  if (!password) {
+    fieldErrors.password = "Le mot de passe est obligatoire.";
+  } else if (password.length < 8) {
+    fieldErrors.password = "Le mot de passe doit contenir au moins 8 caractères.";
+  }
+
+  if (!confirmPassword) {
+    fieldErrors.confirmPassword = "Veuillez confirmer le mot de passe.";
+  } else if (password !== confirmPassword) {
+    fieldErrors.confirmPassword = "Les mots de passe ne correspondent pas.";
+  }
+
   return {
-    values: { email, role },
+    values: { email, role, fullName, password, confirmPassword },
     fieldErrors,
     error: Object.keys(fieldErrors).length ? "Veuillez corriger les champs indiqués." : null,
   };

@@ -91,20 +91,63 @@ describe("navigation dynamique", () => {
 
 describe("invitations", () => {
   it("refuse un e-mail invalide et un rôle owner", () => {
-    const invalid = validateInvitationForm(form({ email: "pas-un-email", role: "seller" }));
+    const invalid = validateInvitationForm(
+      form({
+        email: "pas-un-email",
+        role: "seller",
+        password: "secret123",
+        confirmPassword: "secret123",
+      }),
+    );
     assert.ok(invalid.fieldErrors.email);
 
-    const ownerRole = validateInvitationForm(form({ email: "a@b.sn", role: "owner" }));
+    const ownerRole = validateInvitationForm(
+      form({
+        email: "a@b.sn",
+        role: "owner",
+        password: "secret123",
+        confirmPassword: "secret123",
+      }),
+    );
     assert.ok(ownerRole.fieldErrors.role);
     assert.equal(isAssignableRole("owner"), false);
     assert.deepEqual([...ASSIGNABLE_ROLES], ["manager", "cashier", "seller", "stock_manager"]);
   });
 
   it("accepte une invitation valide", () => {
-    const result = validateInvitationForm(form({ email: "moussa@email.com", role: "seller" }));
+    const result = validateInvitationForm(
+      form({
+        email: "moussa@email.com",
+        role: "seller",
+        password: "secret123",
+        confirmPassword: "secret123",
+      }),
+    );
     assert.equal(result.error, null);
     assert.equal(result.values.role, "seller");
     assert.equal(isValidEmail("moussa@email.com"), true);
+  });
+
+  it("exige un mot de passe d'au moins 8 caractères", () => {
+    const short = validateInvitationForm(
+      form({
+        email: "moussa@email.com",
+        role: "seller",
+        password: "123",
+        confirmPassword: "123",
+      }),
+    );
+    assert.ok(short.fieldErrors.password);
+
+    const mismatch = validateInvitationForm(
+      form({
+        email: "moussa@email.com",
+        role: "seller",
+        password: "secret123",
+        confirmPassword: "autre123",
+      }),
+    );
+    assert.ok(mismatch.fieldErrors.confirmPassword);
   });
 
   it("considère une invitation expirée comme non acceptable", () => {

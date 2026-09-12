@@ -8,7 +8,9 @@ import { isRedirectError } from "@/lib/products/errors";
 import { assertFeature, assertLimit } from "@/lib/subscriptions/access";
 import { mapSubscriptionError } from "@/lib/subscriptions/errors";
 import { mapTeamError } from "@/lib/team/errors";
+import { provisionMemberAuthUser } from "@/lib/team/provision-member";
 import { validateInvitationForm } from "@/lib/team/validation";
+import { isServiceRoleConfigured } from "@/lib/payments/service-client";
 import { createClient } from "@/lib/supabase/server";
 import type { AuthResult } from "@/types";
 
@@ -44,9 +46,20 @@ export async function inviteMemberAction(
     await requirePermission("team.invite");
     await assertFeature("team_management");
     await assertLimit("team_members");
+
+    if (!isServiceRoleConfigured()) {
+      throw new Error("SERVICE_ROLE_NOT_CONFIGURED");
+    }
+
+    const provisioned = await provisionMemberAuthUser({
+      email: values.email,
+      password: values.password,
+      fullName: values.fullName,
+    });
+
     const supabase = await createClient();
-    const { error: rpcError } = await supabase.rpc("invite_business_member", {
-      p_email: values.email,
+    const { error: rpcError } = await supabase.rpc("add_business_member_direct", {
+      p_user_id: provisioned.user.id,
       p_role: values.role,
     });
 
@@ -58,7 +71,13 @@ export async function inviteMemberAction(
     }
 
     revalidateTeam();
-    return { error: null, success: true, message: "Invitation envoyée." };
+    return {
+      error: null,
+      success: true,
+      message: provisioned.created
+        ? "Membre ajouté. Il peut se connecter avec cet e-mail et ce mot de passe, puis arrive directement dans votre boutique."
+        : "Membre ajouté. Ce compte existait déjà : il se connecte avec son mot de passe actuel, puis arrive dans votre boutique.",
+    };
   } catch (caught) {
     if (isRedirectError(caught)) {
       throw caught;
