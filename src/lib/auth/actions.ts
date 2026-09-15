@@ -68,7 +68,7 @@ export async function signIn(
     }
 
     const userId = data.user.id;
-    const membership = await getFirstMembership(supabase, userId);
+    const membership = await getFirstMembership(userId);
     const safeNext = safePostAuthNext(String(formData.get("next") ?? ""));
 
     if (membership?.kind === "suspended") {

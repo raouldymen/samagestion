@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DashboardPeriod } from "@/types/dashboard";
 
@@ -14,6 +15,7 @@ export function PeriodSelector({ period }: { period: DashboardPeriod }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [pending, startTransition] = useTransition();
 
   function select(next: DashboardPeriod) {
     const params = new URLSearchParams(searchParams.toString());
@@ -25,14 +27,16 @@ export function PeriodSelector({ period }: { period: DashboardPeriod }) {
     }
 
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
+    startTransition(() => {
+      router.replace(query ? `${pathname}?${query}` : pathname);
+    });
   }
 
   return (
     <div
       role="tablist"
       aria-label="Période"
-      className="mb-4 flex gap-2 overflow-x-auto pb-1 lg:mb-6"
+      className={`mb-4 flex gap-2 overflow-x-auto pb-1 lg:mb-6 ${pending ? "opacity-70" : ""}`}
     >
       {PERIODS.map((item) => {
         const selected = item.value === period;

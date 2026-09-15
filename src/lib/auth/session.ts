@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { resolveAuthOrigin } from "@/lib/auth/origin";
 import type { AppUser, Business, CurrentSession } from "@/types";
-import type { BusinessRole, Database, MemberStatus } from "@/types/database";
+import type { BusinessRole, Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type TypedClient = SupabaseClient<Database>;
@@ -44,10 +44,6 @@ function isBusinessRole(role: string): role is BusinessRole {
   );
 }
 
-function isMemberStatus(value: string): value is MemberStatus {
-  return value === "active" || value === "invited" || value === "suspended";
-}
-
 export async function getRequestOrigin() {
   const headerStore = await headers();
   return resolveAuthOrigin({
@@ -61,7 +57,7 @@ export async function getRequestOrigin() {
   });
 }
 
-export async function getAuthUser() {
+export const getAuthUser = cache(async () => {
   if (!isSupabaseConfigured()) {
     return null;
   }
@@ -72,7 +68,7 @@ export async function getAuthUser() {
   } = await supabase.auth.getUser();
 
   return user;
-}
+});
 
 async function loadBusiness(supabase: TypedClient, businessId: string) {
   const { data: businessRow, error: businessError } = await supabase
@@ -90,69 +86,48 @@ async function loadBusiness(supabase: TypedClient, businessId: string) {
   return mapBusiness(businessRow);
 }
 
-export async function getFirstMembership(supabase: TypedClient, userId: string): Promise<MembershipLookup> {
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("current_business_id")
-    .eq("id", userId)
-    .maybeSingle();
+export const getFirstMembership = cache(
+  async (userId: string): Promise<MembershipLookup> => {
+    const supabase = await createClient();
+    const [{ data: profile }, { data: members }] = await Promise.all([
+      supabase.from("profiles").select("current_business_id").eq("id", userId).maybeSingle(),
+      supabase
+        .from("business_members")
+        .select("role, status, business_id")
+        .eq("user_id", userId)
+        .in("status", ["active", "suspended"])
+        .order("created_at", { ascending: true }),
+    ]);
 
-  const preferredBusinessId = profile?.current_business_id;
+    const rows = members ?? [];
+    const preferredBusinessId = profile?.current_business_id;
+    const active = rows.filter(
+      (row) => row.status === "active" && isBusinessRole(row.role),
+    );
+    const chosen =
+      (preferredBusinessId
+        ? active.find((row) => row.business_id === preferredBusinessId)
+        : undefined) ??
+      active[0] ??
+      rows.find((row) => row.status === "suspended");
 
-  if (preferredBusinessId) {
-    const { data: preferredMember } = await supabase
-      .from("business_members")
-      .select("role, status, business_id")
-      .eq("user_id", userId)
-      .eq("business_id", preferredBusinessId)
-      .eq("status", "active")
-      .maybeSingle();
-
-    if (preferredMember && isBusinessRole(preferredMember.role)) {
-      const business = await loadBusiness(supabase, preferredMember.business_id);
-
-      if (business) {
-        return { kind: "active", role: preferredMember.role, business };
-      }
+    if (!chosen) {
+      return null;
     }
-  }
 
-  const { data: activeMember, error: activeError } = await supabase
-    .from("business_members")
-    .select("role, status, business_id")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    const business = await loadBusiness(supabase, chosen.business_id);
 
-  if (!activeError && activeMember && isBusinessRole(activeMember.role)) {
-    const business = await loadBusiness(supabase, activeMember.business_id);
-
-    if (business) {
-      return { kind: "active", role: activeMember.role, business };
+    if (!business) {
+      return null;
     }
-  }
 
-  const { data: suspendedMember } = await supabase
-    .from("business_members")
-    .select("role, status, business_id")
-    .eq("user_id", userId)
-    .eq("status", "suspended")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (suspendedMember && isMemberStatus(suspendedMember.status)) {
-    const business = await loadBusiness(supabase, suspendedMember.business_id);
-
-    if (business) {
-      return { kind: "suspended", business };
+    if (chosen.status === "active" && isBusinessRole(chosen.role)) {
+      return { kind: "active", role: chosen.role, business };
     }
-  }
 
-  return null;
-}
+    return { kind: "suspended", business };
+  },
+);
 
 export async function getPostAuthPath(
   supabase: TypedClient,
@@ -160,7 +135,7 @@ export async function getPostAuthPath(
   membership?: MembershipLookup,
 ) {
   const resolved =
-    membership === undefined ? await getFirstMembership(supabase, userId) : membership;
+    membership === undefined ? await getFirstMembership(userId) : membership;
 
   if (resolved?.kind === "suspended") {
     return "/suspended";
@@ -220,7 +195,10 @@ export const requireBusinessSession: () => Promise<CurrentSession> = cache(
   async () => {
     const user = await requireUser();
     const supabase = await createClient();
-    const membership = await getFirstMembership(supabase, user.id);
+    const [membership, appUser] = await Promise.all([
+      getFirstMembership(user.id),
+      getAppUser(supabase, user),
+    ]);
 
     if (!membership) {
       redirect("/onboarding");
@@ -229,8 +207,6 @@ export const requireBusinessSession: () => Promise<CurrentSession> = cache(
     if (membership.kind === "suspended") {
       redirect("/suspended");
     }
-
-    const appUser = await getAppUser(supabase, user);
 
     return {
       user: appUser,
@@ -243,8 +219,7 @@ export const requireBusinessSession: () => Promise<CurrentSession> = cache(
 
 export async function requireUserWithoutBusiness() {
   const user = await requireUser();
-  const supabase = await createClient();
-  const membership = await getFirstMembership(supabase, user.id);
+  const membership = await getFirstMembership(user.id);
 
   if (membership?.kind === "active") {
     redirect("/dashboard");

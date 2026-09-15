@@ -75,6 +75,7 @@ export function PlusSheet({ open, onClose }: PlusSheetProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch
                 onClick={onClose}
                 className="flex min-h-12 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >

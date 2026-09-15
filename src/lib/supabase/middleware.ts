@@ -14,6 +14,10 @@ function redirectWithCookies(url: URL, from: NextResponse) {
   return response;
 }
 
+function hasSupabaseAuthCookie(request: NextRequest) {
+  return request.cookies.getAll().some((cookie) => cookie.name.includes("-auth-token"));
+}
+
 export async function updateSession(request: NextRequest) {
   const env = getSupabasePublicEnv();
   const pathname = request.nextUrl.pathname;
@@ -24,6 +28,21 @@ export async function updateSession(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    return response;
+  }
+
+  const hasSessionCookie = hasSupabaseAuthCookie(request);
+
+  if (!hasSessionCookie) {
+    if (isProtectedPath(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = pathname.startsWith("/invitations/")
+        ? `?next=${encodeURIComponent(pathname)}`
+        : "";
       return NextResponse.redirect(url);
     }
 

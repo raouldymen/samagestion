@@ -49,8 +49,9 @@ export function Logo({
         <Image
           src="/brand/samagestion-logo.png"
           alt="SamaGestion"
-          width={2172}
-          height={724}
+          width={168}
+          height={56}
+          sizes="168px"
           priority={size === "lg"}
           className={cn("object-contain object-left", logoSizes[size])}
         />

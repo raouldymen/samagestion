@@ -12,8 +12,8 @@ export async function AuthenticatedShell({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await requireBusinessSession();
-  const [unreadCount, latest] = await Promise.all([
+  const [session, unreadCount, latest] = await Promise.all([
+    requireBusinessSession(),
     getUnreadNotificationCount(),
     listLatestNotifications(),
   ]);

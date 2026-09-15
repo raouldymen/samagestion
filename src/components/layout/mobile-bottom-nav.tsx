@@ -35,6 +35,7 @@ export function MobileBottomNav({ plusOpen, onPlusToggle }: MobileBottomNavProps
             <li key={item.href} className="min-w-0">
               <Link
                 href={item.href}
+                prefetch
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex h-full min-h-12 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium",

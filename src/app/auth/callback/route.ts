@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(loginError);
   }
 
-  const membership = await getFirstMembership(supabase, user.id);
+  const membership = await getFirstMembership(user.id);
   const safeNext = safePostAuthNext(url.searchParams.get("next"));
 
   if (membership?.kind === "suspended") {
