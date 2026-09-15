@@ -39,6 +39,15 @@ export default async function HomePage() {
             Voir les tarifs
           </Button>
         </div>
+        <p className="mt-8 text-xs text-muted-foreground">
+          <a className="underline-offset-2 hover:underline" href="/confidentialite">
+            Confidentialité
+          </a>
+          {" · "}
+          <a className="underline-offset-2 hover:underline" href="/conditions">
+            Conditions
+          </a>
+        </p>
       </main>
     </div>
   );
