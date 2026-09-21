@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { mapAuthError } from "@/lib/auth/errors";
 import { safePostAuthNext } from "@/lib/auth/paths";
 import { getFirstMembership, getPostAuthPath, getRequestOrigin } from "@/lib/auth/session";
-import { validateLogin, validateRegister } from "@/lib/auth/validation";
+import { isValidEmail, validateLogin, validateRegister } from "@/lib/auth/validation";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
   RATE_LIMITS,
@@ -19,7 +19,7 @@ const AUTH_NOT_CONFIGURED =
   "L'authentification n'est pas encore configurée. Ajoutez vos clés Supabase dans .env.local.";
 
 async function enforceAuthRateLimit(
-  kind: "login" | "signup",
+  kind: "login" | "signup" | "passwordReset",
 ): Promise<AuthResult | null> {
   const h = await headers();
   const ip = clientIpFromHeaders(h);
@@ -154,12 +154,17 @@ export async function requestPasswordReset(
     return { error: AUTH_NOT_CONFIGURED };
   }
 
+  const limited = await enforceAuthRateLimit("passwordReset");
+  if (limited) {
+    return limited;
+  }
+
   const email = String(formData.get("email") ?? "").trim();
 
-  if (!email) {
+  if (!email || !isValidEmail(email)) {
     return {
-      error: "Veuillez renseigner votre adresse e-mail.",
-      fieldErrors: { email: "L'adresse e-mail est obligatoire." },
+      error: "Veuillez saisir une adresse e-mail valide.",
+      fieldErrors: { email: email ? "Adresse e-mail invalide." : "L'adresse e-mail est obligatoire." },
     };
   }
 

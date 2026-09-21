@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function NewExpensePage() {
   const session = await requireBusinessSession();
 
-  if (!can(session.role, "expenses.manage")) {
+  if (!can(session.role, "expenses.create")) {
     redirect("/expenses");
   }
 

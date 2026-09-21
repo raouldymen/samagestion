@@ -3,8 +3,9 @@ import { PurchaseStatusBadge } from "@/components/purchases/purchase-status-badg
 import { paymentMethodLabel } from "@/lib/sales/constants";
 import { formatCalendarDate, formatFcfaAbsolute } from "@/lib/utils/format";
 import type { Purchase } from "@/types/purchases";
+import { SupplierDebtPaymentForm } from "@/components/suppliers/supplier-debt-payment-form";
 
-export function PurchaseDetails({ purchase }: { purchase: Purchase }) {
+export function PurchaseDetails({ purchase, canSettleDebt = false }: { purchase: Purchase; canSettleDebt?: boolean }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
@@ -22,6 +23,7 @@ export function PurchaseDetails({ purchase }: { purchase: Purchase }) {
             <dt className="text-muted-foreground">Saisi par</dt>
             <dd className="font-medium">{purchase.creatorName}</dd>
           </div>
+          {purchase.dueDate ? <div><dt className="text-muted-foreground">Échéance</dt><dd className="font-medium">{formatCalendarDate(purchase.dueDate)}</dd></div> : null}
         </dl>
         <h3 className="mt-5 text-sm font-semibold">Produits</h3>
         <ul className="mt-2 divide-y divide-border">
@@ -64,9 +66,10 @@ export function PurchaseDetails({ purchase }: { purchase: Purchase }) {
           </div>
         </dl>
         {purchase.status === "completed" && purchase.amountDue > 0 ? (
-          <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
-            Dette fournisseur : {formatFcfaAbsolute(purchase.amountDue)}
-          </p>
+          <div className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+            <p>Dette fournisseur : {formatFcfaAbsolute(purchase.amountDue)}</p>
+            {canSettleDebt && purchase.supplierId ? <SupplierDebtPaymentForm purchaseId={purchase.id} supplierId={purchase.supplierId} maximum={purchase.amountDue} /> : null}
+          </div>
         ) : null}
         {purchase.notes ? (
           <p className="mt-4 text-sm text-muted-foreground">{purchase.notes}</p>

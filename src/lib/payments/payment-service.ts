@@ -37,7 +37,12 @@ async function ensureMockCheckoutEnvironment() {
     return;
   }
   const provider = getPaymentProviderName();
-  if (provider !== "mock" && provider !== "test" && provider !== "manual") {
+  if (
+    provider !== "mock" &&
+    provider !== "test" &&
+    provider !== "manual" &&
+    provider !== "paydunya"
+  ) {
     return;
   }
   if (!isServiceRoleConfigured()) {

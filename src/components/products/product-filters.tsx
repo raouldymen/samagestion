@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { ListSearch } from "@/components/ui/list-search";
 import { Select } from "@/components/ui/select";
+import { searchProductSuggestionsAction } from "@/lib/products/actions";
 import type { Category } from "@/types/products";
 
 export function ProductFilters({ categories }: { categories: Category[] }) {
@@ -16,7 +15,7 @@ export function ProductFilters({ categories }: { categories: Category[] }) {
   function updateFilter(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
 
-    if (!value || value === "all") {
+    if (!value || (value === "all" && key !== "status")) {
       params.delete(key);
     } else {
       params.set(key, value);
@@ -70,52 +69,5 @@ export function ProductFilters({ categories }: { categories: Category[] }) {
 }
 
 function ProductSearch({ initialQuery }: { initialQuery: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
-  const [query, setQuery] = useState(initialQuery);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      const current = searchParams.get("q") ?? "";
-
-      if (query === current || query.trim() === current) {
-        return;
-      }
-
-      const params = new URLSearchParams(searchParams.toString());
-
-      if (query.trim()) {
-        params.set("q", query.trim());
-      } else {
-        params.delete("q");
-      }
-
-      params.delete("page");
-      startTransition(() => {
-        router.replace(`${pathname}?${params.toString()}`);
-      });
-    }, 300);
-
-    return () => window.clearTimeout(timeout);
-  }, [query, pathname, router, searchParams, startTransition]);
-
-  return (
-    <div className="relative">
-      <Search
-        className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-        aria-hidden="true"
-      />
-      <Input
-        id="product-search"
-        label="Rechercher un produit"
-        hideLabel
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Rechercher un produit"
-        className="pl-10"
-      />
-    </div>
-  );
+  return <ListSearch id="product-search" label="Rechercher un produit" placeholder="Rechercher un produit" initialQuery={initialQuery} emptyLabel="Aucun produit récent." searchSuggestions={searchProductSuggestionsAction} />;
 }

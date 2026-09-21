@@ -14,6 +14,7 @@ export function SupplierTable({ suppliers }: { suppliers: SupplierListItem[] }) 
             <th className="px-4 py-3 font-medium">Nombre d&apos;achats</th>
             <th className="px-4 py-3 font-medium">Montant acheté</th>
             <th className="px-4 py-3 font-medium">Dette</th>
+            <th className="px-4 py-3 font-medium">Échéance</th>
             <th className="px-4 py-3 font-medium">Statut</th>
             <th className="px-4 py-3 font-medium">Actions</th>
           </tr>
@@ -26,6 +27,7 @@ export function SupplierTable({ suppliers }: { suppliers: SupplierListItem[] }) 
               <td className="px-4 py-3">{supplier.purchasesCount}</td>
               <td className="px-4 py-3">{formatFcfaAbsolute(supplier.purchasesTotal)}</td>
               <td className="px-4 py-3">{formatFcfaAbsolute(supplier.amountDue)}</td>
+              <td className={`px-4 py-3 ${((supplier.overdueAmount ?? 0) > 0) ? "font-medium text-danger" : ""}`}>{(supplier.overdueAmount ?? 0) > 0 ? "En retard" : supplier.nextDueDate ?? "—"}</td>
               <td className="px-4 py-3">
                 <Badge variant={supplier.isActive ? "success" : "neutral"}>
                   {supplier.isActive ? "Actif" : "Inactif"}

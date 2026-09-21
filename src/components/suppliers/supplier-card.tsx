@@ -20,6 +20,7 @@ export function SupplierCard({ supplier }: { supplier: SupplierListItem }) {
           {supplier.purchasesCount} achat{supplier.purchasesCount > 1 ? "s" : ""} · Dette{" "}
           {formatFcfaAbsolute(supplier.amountDue)}
         </p>
+        {(supplier.overdueAmount ?? 0) > 0 ? <p className="mt-2 text-sm font-medium text-danger">En retard : {formatFcfaAbsolute(supplier.overdueAmount ?? 0)}</p> : supplier.nextDueDate ? <p className="mt-2 text-sm text-muted-foreground">Échéance : {supplier.nextDueDate}</p> : null}
       </Link>
     </Card>
   );

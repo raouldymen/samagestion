@@ -5,10 +5,20 @@ import type { PaymentStatus, SaleStatus } from "@/types/sales";
 export function SaleStatusBadge({
   paymentStatus,
   status,
+  awaitingCashier = false,
+  isReturned = false,
 }: {
   paymentStatus: PaymentStatus;
   status: SaleStatus;
+  awaitingCashier?: boolean;
+  isReturned?: boolean;
 }) {
+  if (awaitingCashier) {
+    return <Badge variant="warning">En attente</Badge>;
+  }
+
+  if (isReturned) return <Badge variant="neutral">Retournée</Badge>;
+
   if (status === "cancelled") {
     return <Badge variant="neutral">{SALE_STATUS_LABELS.cancelled}</Badge>;
   }

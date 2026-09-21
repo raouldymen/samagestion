@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { MobileTopBar } from "@/components/layout/mobile-top-bar";
+import { OfflineStatus } from "@/components/mobile/offline-status";
+import { OfflineSalesSync } from "@/components/mobile/offline-sales-sync";
 import { PlusSheet } from "@/components/layout/plus-sheet";
 import { Sidebar } from "@/components/layout/sidebar";
 
@@ -11,6 +13,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh bg-background">
+      <OfflineStatus />
+      <OfflineSalesSync />
       <Sidebar />
       <div className="lg:pl-[var(--sidebar-width)] print:pl-0">
         <MobileTopBar />

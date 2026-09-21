@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { DateInput } from "@/components/ui/date-input";
 import type { DashboardPeriod } from "@/types/dashboard";
 
 const PERIODS: { value: DashboardPeriod; label: string }[] = [
@@ -9,9 +10,18 @@ const PERIODS: { value: DashboardPeriod; label: string }[] = [
   { value: "7d", label: "7 jours" },
   { value: "month", label: "Ce mois" },
   { value: "previous_month", label: "Mois précédent" },
+  { value: "custom", label: "Personnaliser" },
 ];
 
-export function PeriodSelector({ period }: { period: DashboardPeriod }) {
+export function PeriodSelector({
+  period,
+  from,
+  to,
+}: {
+  period: DashboardPeriod;
+  from?: string;
+  to?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -26,6 +36,27 @@ export function PeriodSelector({ period }: { period: DashboardPeriod }) {
       params.set("period", next);
     }
 
+    if (next !== "custom") {
+      params.delete("from");
+      params.delete("to");
+    }
+
+    const query = params.toString();
+    startTransition(() => {
+      router.replace(query ? `${pathname}?${query}` : pathname);
+    });
+  }
+
+  function updateDate(key: "from" | "to", value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("period", "custom");
+
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+
     const query = params.toString();
     startTransition(() => {
       router.replace(query ? `${pathname}?${query}` : pathname);
@@ -33,12 +64,9 @@ export function PeriodSelector({ period }: { period: DashboardPeriod }) {
   }
 
   return (
-    <div
-      role="tablist"
-      aria-label="Période"
-      className={`mb-4 flex gap-2 overflow-x-auto pb-1 lg:mb-6 ${pending ? "opacity-70" : ""}`}
-    >
-      {PERIODS.map((item) => {
+    <div className={`mb-4 lg:mb-6 ${pending ? "opacity-70" : ""}`}>
+      <div role="tablist" aria-label="Période" className="flex gap-2 overflow-x-auto pb-1">
+        {PERIODS.map((item) => {
         const selected = item.value === period;
 
         return (
@@ -57,7 +85,24 @@ export function PeriodSelector({ period }: { period: DashboardPeriod }) {
             {item.label}
           </button>
         );
-      })}
+        })}
+      </div>
+      {period === "custom" ? (
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <DateInput
+            id="dashboard-from"
+            label="Du"
+            defaultValue={from ?? ""}
+            onChange={(event) => updateDate("from", event.target.value)}
+          />
+          <DateInput
+            id="dashboard-to"
+            label="Au"
+            defaultValue={to ?? ""}
+            onChange={(event) => updateDate("to", event.target.value)}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

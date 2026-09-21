@@ -16,6 +16,23 @@ export function getPaymentSecretKey() {
   return process.env.PAYMENT_SECRET_KEY ?? "";
 }
 
+export function getPaymentPublicKey() {
+  return process.env.PAYMENT_PUBLIC_KEY ?? "";
+}
+
+/** Master key PayDunya (hash IPN SHA-512). */
+export function getPaydunyaMasterKey() {
+  return process.env.PAYDUNYA_MASTER_KEY || getPaymentWebhookSecret();
+}
+
+export function getPaydunyaPrivateKey() {
+  return process.env.PAYDUNYA_PRIVATE_KEY || getPaymentSecretKey();
+}
+
+export function getPaydunyaToken() {
+  return process.env.PAYDUNYA_TOKEN || getPaymentPublicKey();
+}
+
 export function getSiteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
@@ -29,5 +46,8 @@ export function getGracePeriodDays() {
 export const SERVER_ONLY_PAYMENT_KEYS = [
   "PAYMENT_SECRET_KEY",
   "PAYMENT_WEBHOOK_SECRET",
+  "PAYDUNYA_MASTER_KEY",
+  "PAYDUNYA_PRIVATE_KEY",
+  "PAYDUNYA_TOKEN",
   "SUPABASE_SERVICE_ROLE_KEY",
 ] as const;

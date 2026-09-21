@@ -16,6 +16,13 @@ export function SecuritySettings() {
       </CardHeader>
       <form action={action} className="flex flex-col gap-4">
         <PasswordInput
+          id="currentPassword"
+          name="currentPassword"
+          label="Ancien mot de passe"
+          autoComplete="current-password"
+          error={state.fieldErrors?.currentPassword}
+        />
+        <PasswordInput
           id="password"
           name="password"
           label="Nouveau mot de passe"

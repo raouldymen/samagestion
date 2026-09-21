@@ -77,6 +77,7 @@ export function clientIpFromHeaders(headers: Headers): string {
 export const RATE_LIMITS = {
   login: { windowMs: 15 * 60_000, max: 20 },
   signup: { windowMs: 60 * 60_000, max: 10 },
+  passwordReset: { windowMs: 60 * 60_000, max: 5 },
   checkout: { windowMs: 15 * 60_000, max: 30 },
   webhook: { windowMs: 60_000, max: 120 },
   mockSimulate: { windowMs: 15 * 60_000, max: 40 },

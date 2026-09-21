@@ -5,11 +5,13 @@ import { redirect } from "next/navigation";
 import { can } from "@/lib/auth/permissions";
 import { requireBusinessSession } from "@/lib/auth/session";
 import { validateCustomerForm } from "@/lib/customers/validation";
+import { listCustomersWithStats } from "@/lib/customers/queries";
 import { isRedirectError } from "@/lib/products/errors";
 import { mapSaleError } from "@/lib/sales/errors";
 import { assertLimit } from "@/lib/subscriptions/access";
 import { createClient } from "@/lib/supabase/server";
 import type { AuthResult } from "@/types";
+import type { SearchSuggestion } from "@/components/ui/list-search";
 
 function revalidateCustomers(customerId?: string) {
   revalidatePath("/customers");
@@ -18,6 +20,24 @@ function revalidateCustomers(customerId?: string) {
   if (customerId) {
     revalidatePath(`/customers/${customerId}`);
   }
+}
+
+export async function searchCustomerSuggestionsAction(
+  query: string,
+  includeArchived = false,
+): Promise<SearchSuggestion[]> {
+  const session = await requireBusinessSession();
+
+  if (!can(session.role, "customers.view")) {
+    return [];
+  }
+
+  const { items } = await listCustomersWithStats({ q: query, includeArchived });
+  return items.slice(0, 8).map((customer) => ({
+    value: customer.name,
+    label: customer.name,
+    detail: customer.phone ?? customer.email ?? "Client",
+  }));
 }
 
 export async function createCustomerAction(
@@ -164,4 +184,24 @@ export async function archiveCustomerAction(formData: FormData): Promise<AuthRes
     }
     return { error: mapSaleError(caught) };
   }
+}
+
+export async function recordCustomerDebtPaymentAction(
+  _prev: AuthResult,
+  formData: FormData,
+): Promise<AuthResult> {
+  const saleId = String(formData.get("saleId") ?? "");
+  const customerId = String(formData.get("customerId") ?? "");
+  const amount = Number(formData.get("amount"));
+  const paymentMethod = String(formData.get("paymentMethod") ?? "cash");
+  if (!saleId || !customerId || !Number.isFinite(amount) || amount <= 0) return { error: "Veuillez saisir un montant valide." };
+  try {
+    const session = await requireBusinessSession();
+    if (!can(session.role, "sales.create") || session.role === "seller") return { error: "Vous n'avez pas l'autorisation d'encaisser une dette." };
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("record_customer_debt_payment", { p_sale_id: saleId, p_amount: amount, p_payment_method: paymentMethod as never, p_notes: String(formData.get("notes") ?? "") || null });
+    if (error) return { error: error.message === "PAYMENT_EXCEEDS_DUE" ? "Le montant dépasse le solde restant." : mapSaleError(error) };
+    revalidateCustomers(customerId);
+    return { error: null, success: true, message: "Remboursement enregistré." };
+  } catch (caught) { if (isRedirectError(caught)) throw caught; return { error: mapSaleError(caught) }; }
 }

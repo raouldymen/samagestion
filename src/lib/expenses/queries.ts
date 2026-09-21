@@ -44,15 +44,9 @@ export async function ensureExpenseCategories() {
 }
 
 export async function listExpenseCategories(): Promise<ExpenseCategory[]> {
-  const session = await requireBusinessSession();
+  await requireBusinessSession();
   const supabase = await createClient();
-  await supabase.rpc("ensure_default_expense_categories");
-
-  const { data, error } = await supabase
-    .from("expense_categories")
-    .select("id, business_id, name, created_at")
-    .eq("business_id", session.businessId)
-    .order("name", { ascending: true });
+  const { data, error } = await supabase.rpc("list_expense_categories");
 
   if (error || !data) {
     return [];

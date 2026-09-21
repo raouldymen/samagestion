@@ -13,22 +13,25 @@ export function DashboardAlerts({
 }) {
   const items = [
     {
-      href: "/reports",
+      href: "/products?stock=out",
       label: `${outOfStock} rupture${outOfStock > 1 ? "s" : ""}`,
       count: outOfStock,
       tone: "text-danger",
+      ariaLabel: "Voir les produits en rupture de stock",
     },
     {
-      href: "/reports",
+      href: "/products?stock=low",
       label: `${lowStock} stock${lowStock > 1 ? "s" : ""} faible${lowStock > 1 ? "s" : ""}`,
       count: lowStock,
       tone: "text-amber-700",
+      ariaLabel: "Voir les produits avec un stock faible",
     },
     {
-      href: "/notifications",
+      href: "/customers?debt=open",
       label: `${customerDebts} dette${customerDebts > 1 ? "s" : ""} importante${customerDebts > 1 ? "s" : ""}`,
       count: customerDebts,
       tone: "text-foreground",
+      ariaLabel: "Voir les clients ayant une dette",
     },
   ];
 
@@ -49,6 +52,7 @@ export function DashboardAlerts({
               <li key={item.label}>
                 <Link
                   href={item.href}
+                  aria-label={item.ariaLabel}
                   className={`block rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted ${item.tone}`}
                 >
                   {item.label}

@@ -136,4 +136,17 @@ describe("périodes dashboard", () => {
     assert.equal(range.prevFrom, "2026-08-14T00:00:00.000Z");
     assert.equal(range.prevTo, "2026-08-21T00:00:00.000Z");
   });
+
+  it("compare une plage personnalisée à la période précédente de même durée", () => {
+    const range = dashboardPeriodRange(
+      "custom",
+      new Date("2026-08-27T15:00:00Z"),
+      "2026-08-10",
+      "2026-08-12",
+    );
+    assert.equal(range.from, "2026-08-10T00:00:00.000Z");
+    assert.equal(range.to, "2026-08-13T00:00:00.000Z");
+    assert.equal(range.prevFrom, "2026-08-07T00:00:00.000Z");
+    assert.equal(range.prevTo, "2026-08-10T00:00:00.000Z");
+  });
 });

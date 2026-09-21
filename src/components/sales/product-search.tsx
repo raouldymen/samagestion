@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { ChevronDown, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { searchSaleProductsAction } from "@/lib/sales/actions";
 import { formatFcfaAbsolute } from "@/lib/utils/format";
@@ -10,24 +10,61 @@ import type { CartLine, SaleProductOption } from "@/types/sales";
 export function ProductSearch({
   onAdd,
   cart,
+  products,
 }: {
   onAdd: (product: SaleProductOption) => void;
   cart: CartLine[];
+  products: SaleProductOption[];
 }) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SaleProductOption[]>([]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [results, setResults] = useState<SaleProductOption[]>(products);
+  const [resultsQuery, setResultsQuery] = useState("");
   const [pending, startTransition] = useTransition();
+  const cache = useRef(new Map<string, SaleProductOption[]>([["", products]]));
 
   useEffect(() => {
+    const term = query.trim();
+
+    if (!term && !menuOpen) {
+      return;
+    }
+
+    const cached = cache.current.get(term);
+    if (cached) {
+      setResults(cached);
+      setResultsQuery(term);
+      return;
+    }
+
+    let active = true;
     const timeout = window.setTimeout(() => {
       startTransition(async () => {
-        const products = await searchSaleProductsAction(query);
-        setResults(products);
-      });
-    }, 200);
+        const products = await searchSaleProductsAction(term);
 
-    return () => window.clearTimeout(timeout);
-  }, [query]);
+        if (active) {
+          cache.current.set(term, products);
+          setResults(products);
+          setResultsQuery(term);
+        }
+      });
+    }, term ? 80 : 0);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
+  }, [menuOpen, query]);
+
+  const term = query.trim();
+  const hasCurrentResults = resultsQuery === term;
+  const showMenu = menuOpen || Boolean(query.trim());
+  const instantMatches = useMemo(
+    () => products.filter((product) => matchesProduct(product, term)),
+    [products, term],
+  );
+  const displayedResults = hasCurrentResults ? results : instantMatches;
+  const availableResults = displayedResults.filter((product) => !cart.some((item) => item.productId === product.id));
 
   return (
     <div className="relative">
@@ -40,29 +77,45 @@ export function ProductSearch({
         label="Rechercher un produit"
         hideLabel
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setMenuOpen(true);
+        }}
         placeholder="Rechercher un produit"
-        className="pl-10"
+        className="pr-12 pl-10"
       />
-      <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-        {pending && results.length === 0 ? (
-          <li className="px-4 py-3 text-sm text-muted-foreground">Recherche...</li>
-        ) : null}
-        {results.map((product) => {
-          const inCart = cart.find((item) => item.productId === product.id);
-
-          return (
+      <button
+        type="button"
+        onClick={() => setMenuOpen((open) => !open)}
+        className="absolute top-1/2 right-1 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-md border border-border bg-muted text-foreground shadow-sm hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="Afficher la liste des produits"
+        aria-expanded={showMenu}
+      >
+        <ChevronDown className={`size-5 transition-transform ${showMenu ? "rotate-180" : ""}`} strokeWidth={2.5} aria-hidden="true" />
+      </button>
+      {showMenu ? (
+        <ul className="absolute top-full right-0 left-0 z-20 mt-2 max-h-72 divide-y divide-border overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
+          {(!hasCurrentResults || pending) && availableResults.length === 0 ? <li className="px-4 py-3 text-sm text-muted-foreground">Recherche...</li> : null}
+          {hasCurrentResults && !pending && availableResults.length === 0 ? (
+            <li className="px-4 py-3 text-sm text-muted-foreground">
+              {results.length ? "Tous les produits trouvés sont déjà ajoutés." : "Aucun produit trouvé."}
+            </li>
+          ) : null}
+          {availableResults.map((product) => (
             <li key={product.id}>
               <button
                 type="button"
-                onClick={() => onAdd(product)}
+                onClick={() => {
+                  onAdd(product);
+                  setQuery("");
+                  setMenuOpen(false);
+                }}
                 className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <span className="min-w-0">
                   <span className="block truncate font-medium">{product.name}</span>
                   <span className="block text-sm text-muted-foreground">
                     Stock disponible : {product.stockQuantity}
-                    {inCart ? ` · Dans le panier : ${inCart.quantity}` : ""}
                   </span>
                 </span>
                 <span className="shrink-0 font-semibold">
@@ -70,9 +123,22 @@ export function ProductSearch({
                 </span>
               </button>
             </li>
-          );
-        })}
-      </ul>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
+}
+
+function matchesProduct(product: SaleProductOption, query: string) {
+  if (!query) return true;
+  const needle = normalize(query);
+  return normalize(product.name).includes(needle) || normalize(product.sku ?? "").includes(needle);
+}
+
+function normalize(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("fr-SN");
 }

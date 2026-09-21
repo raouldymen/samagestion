@@ -11,7 +11,8 @@ import {
 } from "@/lib/auth/permissions";
 import { isValidEmail } from "@/lib/auth/validation";
 import { canReceiveNotification } from "@/lib/notifications/rules";
-import { navForRole, DESKTOP_NAV } from "@/lib/navigation";
+import { navForRole, DESKTOP_NAV, PLUS_NAV } from "@/lib/navigation";
+import { canAccessSettingsSection } from "@/lib/settings/sections";
 import { validateInvitationForm } from "@/lib/team/validation";
 
 describe("rôles et permissions", () => {
@@ -32,11 +33,12 @@ describe("rôles et permissions", () => {
     assert.equal(hasPermission("manager", "settings.edit"), false);
   });
 
-  it("permet au caissier de vendre sans voir le bénéfice", () => {
+  it("permet au caissier de vendre et d'ajouter une dépense sans voir le bénéfice", () => {
     assert.equal(hasPermission("cashier", "sales.create"), true);
     assert.equal(hasPermission("cashier", "sales.view"), true);
     assert.equal(hasPermission("cashier", "reports.financial"), false);
-    assert.equal(hasPermission("cashier", "expenses.view"), false);
+    assert.equal(hasPermission("cashier", "expenses.view"), true);
+    assert.equal(hasPermission("cashier", "expenses.create"), true);
     assert.equal(hasPermission("cashier", "stock.adjust"), false);
     assert.equal(hasPermission("cashier", "team.view"), false);
     assert.equal(canViewFinancialReports("cashier"), false);
@@ -75,17 +77,45 @@ describe("rôles et permissions", () => {
 });
 
 describe("navigation dynamique", () => {
-  it("masque Rapports et Équipe sans permission", () => {
+  it("masque Rapports et Équipe sans permission tout en laissant les dépenses au caissier", () => {
     const cashier = navForRole(DESKTOP_NAV, "cashier").map((item) => item.href);
     assert.equal(cashier.includes("/reports"), false);
     assert.equal(cashier.includes("/team"), false);
-    assert.equal(cashier.includes("/expenses"), false);
+    assert.equal(cashier.includes("/expenses"), true);
     assert.equal(cashier.includes("/sales"), true);
 
     const owner = navForRole(DESKTOP_NAV, "owner").map((item) => item.href);
     assert.equal(owner.includes("/reports"), true);
     assert.equal(owner.includes("/team"), true);
     assert.equal(owner.includes("/settings"), true);
+    assert.equal(owner.includes("/sales/checkout/closures"), false);
+
+    const ownerWithCashier = navForRole(DESKTOP_NAV, "owner", true).map((item) => item.href);
+    assert.equal(ownerWithCashier.includes("/sales/checkout/closures"), true);
+  });
+
+  it("rend les réglages et rapports disponibles dans le menu mobile", () => {
+    const owner = navForRole(PLUS_NAV, "owner").map((item) => item.href);
+    assert.equal(owner.includes("/reports"), true);
+    assert.equal(owner.includes("/settings"), true);
+    assert.equal(owner.includes("/settings/receipts"), true);
+
+    const cashier = navForRole(PLUS_NAV, "cashier").map((item) => item.href);
+    assert.equal(cashier.includes("/settings"), true);
+    assert.equal(cashier.includes("/reports"), false);
+  });
+
+  it("masque les réglages du commerce au caissier", () => {
+    assert.equal(canAccessSettingsSection("cashier", "business"), false);
+    assert.equal(canAccessSettingsSection("cashier", "receipts"), false);
+    assert.equal(canAccessSettingsSection("cashier", "billing"), false);
+    assert.equal(canAccessSettingsSection("stock_manager", "business"), false);
+    assert.equal(canAccessSettingsSection("stock_manager", "subscription"), false);
+    assert.equal(canAccessSettingsSection("stock_manager", "usage"), false);
+    assert.equal(canAccessSettingsSection("stock_manager", "billing"), false);
+    assert.equal(canAccessSettingsSection("stock_manager", "receipts"), false);
+    assert.equal(canAccessSettingsSection("seller", "receipts"), true);
+    assert.equal(canAccessSettingsSection("owner", "subscription"), true);
   });
 });
 

@@ -15,8 +15,8 @@ import { cn } from "@/lib/utils/cn";
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useUser();
-  const { business, role } = useBusiness();
-  const items = navForRole(DESKTOP_NAV, role);
+  const { business, role, hasActiveCashier } = useBusiness();
+  const items = navForRole(DESKTOP_NAV, role, hasActiveCashier);
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[var(--sidebar-width)] flex-col border-r border-border bg-sidebar print:hidden lg:flex">
@@ -60,7 +60,11 @@ export function Sidebar() {
             <p className="truncate text-xs text-muted-foreground">{user.email}</p>
           </div>
         </div>
-        <form action={signOut} className="mt-3">
+        <form
+          action={signOut}
+          className="mt-3"
+          onSubmit={() => navigator.serviceWorker?.controller?.postMessage({ type: "CLEAR_PRIVATE_PAGES" })}
+        >
           <button
             type="submit"
             className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-slate-600 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

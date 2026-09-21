@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: "Clients",
 };
 
-type SearchParams = Promise<{ q?: string; archived?: string }>;
+type SearchParams = Promise<{ q?: string; archived?: string; debt?: string }>;
 
 export default async function CustomersPage({
   searchParams,
@@ -25,12 +25,14 @@ export default async function CustomersPage({
   const session = await requireBusinessSession();
   const params = await searchParams;
   const includeArchived = params.archived === "1";
+  const debtOnly = params.debt === "open";
   const canCreate = can(session.role, "customers.create");
   const canEdit = can(session.role, "customers.edit");
-  const { items, error } = await listCustomersWithStats({
+  const { items: allItems, error } = await listCustomersWithStats({
     q: params.q,
     includeArchived,
   });
+  const items = debtOnly ? allItems.filter((customer) => customer.amountDue > 0) : allItems;
 
   return (
     <>
@@ -57,7 +59,7 @@ export default async function CustomersPage({
         />
       </div>
 
-      <CustomerSearch q={params.q} includeArchived={includeArchived} />
+      <CustomerSearch q={params.q} includeArchived={includeArchived} debtOnly={debtOnly} />
 
       {error ? (
         <Card className="py-10 text-center">

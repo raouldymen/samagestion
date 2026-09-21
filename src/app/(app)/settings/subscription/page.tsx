@@ -4,7 +4,7 @@ import { SubscriptionActions } from "@/components/subscriptions/subscription-act
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { hasPermission } from "@/lib/auth/permissions";
-import { requirePermission } from "@/lib/auth/access";
+import { requireSettingsSection } from "@/lib/settings/access";
 import { getSubscriptionBundle } from "@/lib/subscriptions/queries";
 import { formatDate, formatFcfaAbsolute } from "@/lib/utils/format";
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SubscriptionSettingsPage() {
-  const session = await requirePermission("settings.view");
+  const session = await requireSettingsSection("subscription");
   const bundle = await getSubscriptionBundle();
   const { plan, subscription } = bundle;
   const canEdit = hasPermission(session.role, "settings.edit");

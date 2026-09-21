@@ -27,18 +27,22 @@ export function SalesTable({ sales }: { sales: SaleListItem[] }) {
               <td className="px-4 py-3 text-muted-foreground">{formatDateTime(sale.createdAt)}</td>
               <td className="px-4 py-3">{sale.customerName ?? "—"}</td>
               <td className="px-4 py-3">{sale.sellerName}</td>
-              <td className="px-4 py-3">{formatFcfaAbsolute(sale.total)}</td>
+              <td className={`px-4 py-3 ${sale.isReturned ? "line-through text-muted-foreground" : ""}`}>{formatFcfaAbsolute(sale.total)}</td>
               <td className="px-4 py-3">{paymentMethodLabel(sale.paymentMethod)}</td>
               <td className="px-4 py-3">
-                <SaleStatusBadge paymentStatus={sale.paymentStatus} status={sale.status} />
+                <SaleStatusBadge paymentStatus={sale.paymentStatus} status={sale.status} awaitingCashier={sale.awaitingCashier} isReturned={sale.isReturned} />
               </td>
               <td className="px-4 py-3">
-                <Link
-                  href={`/sales/${sale.id}`}
-                  className="font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  Voir
-                </Link>
+                {sale.awaitingCashier ? (
+                  <span className="text-muted-foreground">À la caisse</span>
+                ) : (
+                  <Link
+                    href={`/sales/${sale.id}`}
+                    className="font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    Voir
+                  </Link>
+                )}
               </td>
             </tr>
           ))}

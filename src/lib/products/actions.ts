@@ -17,7 +17,9 @@ import {
   validateStockAdjustment,
 } from "@/lib/products/validation";
 import { createClient } from "@/lib/supabase/server";
+import { listProducts } from "@/lib/products/queries";
 import type { AuthResult } from "@/types";
+import type { SearchSuggestion } from "@/components/ui/list-search";
 
 function revalidateProducts(productId?: string) {
   revalidatePath("/products");
@@ -27,6 +29,18 @@ function revalidateProducts(productId?: string) {
     revalidatePath(`/products/${productId}`);
     revalidatePath(`/products/${productId}/edit`);
   }
+}
+
+export async function searchProductSuggestionsAction(query: string): Promise<SearchSuggestion[]> {
+  const session = await requireBusinessSession();
+  assertPermission(session, "products.view");
+  const { items } = await listProducts({ q: query, status: "active", page: 1 });
+
+  return items.slice(0, 8).map((product) => ({
+    value: product.name,
+    label: product.name,
+    detail: product.sku ? `Référence : ${product.sku}` : "Produit",
+  }));
 }
 
 async function uploadProductImage(productId: string, businessId: string, file: File) {
@@ -239,6 +253,32 @@ export async function adjustStockAction(
       throw caught;
     }
 
+    return { error: mapProductError(caught) };
+  }
+}
+
+export async function applyInventoryAction(_prev: AuthResult, formData: FormData): Promise<AuthResult> {
+  let items: Array<{ productId: string; countedQuantity: number }> = [];
+  try {
+    const parsed: unknown = JSON.parse(String(formData.get("items") ?? "[]"));
+    if (Array.isArray(parsed)) items = parsed.flatMap((item) => {
+      if (!item || typeof item !== "object") return [];
+      const row = item as { productId?: unknown; countedQuantity?: unknown };
+      const countedQuantity = Number(row.countedQuantity);
+      return typeof row.productId === "string" && Number.isFinite(countedQuantity) && countedQuantity >= 0 ? [{ productId: row.productId, countedQuantity }] : [];
+    });
+  } catch { /* handled below */ }
+  if (items.length === 0 || items.length > 500) return { error: "Saisissez au moins un comptage valide." };
+  try {
+    const session = await requireBusinessSession();
+    assertPermission(session, "stock.adjust");
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("apply_inventory_count", { p_items: items.map((item) => ({ product_id: item.productId, counted_quantity: item.countedQuantity })) });
+    if (error) return { error: mapProductError(error) };
+    revalidateProducts();
+    revalidatePath("/products/inventory");
+    return { error: null, success: true, message: `${Number(data ?? 0)} écart${Number(data ?? 0) > 1 ? "s" : ""} de stock validé${Number(data ?? 0) > 1 ? "s" : ""}.` };
+  } catch (caught) {
     return { error: mapProductError(caught) };
   }
 }

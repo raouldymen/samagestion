@@ -10,7 +10,7 @@ export function NotificationDropdown({ onNavigate }: { onNavigate?: () => void }
   const { latest, unreadCount } = useNotifications();
 
   return (
-    <div className="w-[min(24rem,calc(100vw-2rem))] rounded-xl border border-border bg-card p-3 shadow-lg">
+    <div className="w-full lg:w-[min(28rem,calc(100vw-1rem))] rounded-xl border border-border bg-card p-3 shadow-lg">
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-sm font-semibold">Notifications</p>
         {unreadCount > 0 ? (
@@ -24,7 +24,7 @@ export function NotificationDropdown({ onNavigate }: { onNavigate?: () => void }
       {latest.length === 0 ? (
         <NotificationEmptyState />
       ) : (
-        <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+        <div className="flex max-h-[calc(100dvh-11rem-env(safe-area-inset-top))] flex-col gap-2 overflow-y-auto overscroll-contain lg:max-h-[calc(100dvh-8rem)]">
           {latest.map((notification) => (
             <NotificationItem key={notification.id} notification={notification} compact />
           ))}

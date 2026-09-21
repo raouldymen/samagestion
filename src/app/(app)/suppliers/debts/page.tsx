@@ -17,7 +17,7 @@ export default async function SupplierDebtsPage() {
     <>
       <PageHeader
         title="Dettes fournisseurs"
-        description="Fournisseurs avec un reste à payer."
+        description="Fournisseurs à payer, avec les retards affichés en priorité."
       />
       <section className="mb-4 grid grid-cols-2 gap-3">
         <Card>

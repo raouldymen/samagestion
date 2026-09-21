@@ -7,11 +7,13 @@ import {
   Gauge,
   Settings2,
   Shield,
+  DatabaseBackup,
   Store,
   Users,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { hasPermission, type Permission } from "@/lib/auth/permissions";
+import { canAccessSettingsSection, type SettingsSection } from "@/lib/settings/sections";
 import type { BusinessRole } from "@/types/database";
 
 const SECTIONS: {
@@ -20,30 +22,36 @@ const SECTIONS: {
   description: string;
   icon: typeof Store;
   permission?: Permission;
+  section?: SettingsSection;
+  ownerOnly?: boolean;
 }[] = [
   {
     href: "/settings/business",
     label: "Commerce",
     description: "Nom, logo, adresse, téléphone et devise.",
     icon: Store,
+    section: "business",
   },
   {
     href: "/settings/subscription",
     label: "Abonnement",
     description: "Plan actuel, renouvellement et upgrade.",
     icon: CreditCard,
+    section: "subscription",
   },
   {
     href: "/settings/usage",
     label: "Utilisation",
     description: "Quotas produits, ventes, clients et membres.",
     icon: Gauge,
+    section: "usage",
   },
   {
     href: "/settings/billing",
     label: "Facturation",
     description: "Historique des paiements.",
     icon: CreditCard,
+    section: "billing",
   },
   {
     href: "/team",
@@ -63,12 +71,20 @@ const SECTIONS: {
     label: "Reçus",
     description: "Personnalisation, numérotation et format d'impression.",
     icon: FileText,
+    section: "receipts",
   },
   {
     href: "/settings/security",
     label: "Sécurité",
     description: "Mot de passe du compte.",
     icon: Shield,
+  },
+  {
+    href: "/settings/backup",
+    label: "Sauvegarde des données",
+    description: "Téléchargez une copie Excel des données de la boutique.",
+    icon: DatabaseBackup,
+    ownerOnly: true,
   },
   {
     href: "/settings/preferences",
@@ -80,7 +96,10 @@ const SECTIONS: {
 
 export function SettingsNav({ role }: { role: BusinessRole }) {
   const items = SECTIONS.filter(
-    (item) => !item.permission || hasPermission(role, item.permission),
+    (item) =>
+      (!item.permission || hasPermission(role, item.permission)) &&
+      (!item.section || canAccessSettingsSection(role, item.section)) &&
+      (!item.ownerOnly || role === "owner"),
   );
 
   return (

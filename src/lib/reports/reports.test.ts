@@ -142,8 +142,8 @@ describe("périodes et granularité", () => {
 });
 
 describe("export CSV", () => {
-  it("conserve les accents et un BOM UTF-8", () => {
-    const file = serializeWorkbook(
+  it("conserve les accents et un BOM UTF-8", async () => {
+    const file = await serializeWorkbook(
       {
         name: "Produits",
         headers: ["Produit", "CA"],
@@ -176,10 +176,13 @@ describe("export CSV", () => {
     assert.equal(csvNumber(14.5), "14,50");
   });
 
-  it("prépare le format Excel sans changer l'export CSV", () => {
-    const csv = serializeWorkbook({ name: "Ventes", headers: ["CA"], rows: [[100]] }, "ventes", "xlsx");
-    assert.equal(csv.format, "csv");
-    assert.ok(csv.filename.endsWith(".csv"));
+  it("produit un vrai classeur Excel", async () => {
+    const xlsx = await serializeWorkbook({ name: "Ventes", headers: ["CA"], rows: [[100]] }, "ventes", "xlsx");
+    assert.equal(xlsx.format, "xlsx");
+    assert.ok(xlsx.filename.endsWith(".xlsx"));
+    assert.equal(xlsx.mime, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    assert.equal(xlsx.body[0], 0x50);
+    assert.equal(xlsx.body[1], 0x4b);
   });
 
   it("n'accepte que les jeux de données prévus", () => {

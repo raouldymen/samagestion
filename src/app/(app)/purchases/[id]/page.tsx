@@ -35,7 +35,7 @@ export default async function PurchaseDetailPage({
           ) : null
         }
       />
-      <PurchaseDetails purchase={purchase} />
+      <PurchaseDetails purchase={purchase} canSettleDebt={can(session.role, "purchases.manage")} />
     </>
   );
 }

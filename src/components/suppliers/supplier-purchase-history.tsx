@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { PurchaseStatusBadge } from "@/components/purchases/purchase-status-badge";
 import { formatCalendarDate, formatFcfaAbsolute } from "@/lib/utils/format";
 import type { PurchaseListItem } from "@/types/purchases";
+import { SupplierDebtPaymentForm } from "@/components/suppliers/supplier-debt-payment-form";
 
 export function SupplierPurchaseHistory({ purchases }: { purchases: PurchaseListItem[] }) {
   return (
@@ -38,6 +39,7 @@ export function SupplierPurchaseHistory({ purchases }: { purchases: PurchaseList
                     </div>
                   </div>
                 </Link>
+                {purchase.amountDue > 0 ? <SupplierDebtPaymentForm purchaseId={purchase.id} supplierId={purchase.supplierId ?? ""} maximum={purchase.amountDue} /> : null}
               </li>
             ))}
           </ul>

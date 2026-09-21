@@ -1,21 +1,16 @@
 /**
- * Adaptateur futur — documenter le prestataire choisi ici avant branchement.
+ * Prestataire réel : PayDunya (PAR).
+ * Doc : https://developers.paydunya.com/doc/EN/http_json
  *
- * UX actuelle (PAYMENT_PROVIDER=mock) : /payment/mobile (Wave / Orange Money).
- * Confirmation réelle = agrégateur à brancher ici (ne pas inventer d'API).
- *
- * Prestataire cible (marché sénégalais) — à compléter :
- * - Nom : (ex. PayDunya / CinetPay / …)
- * - API :
- * - Checkout :
- * - Webhook : /api/webhooks/payments
- * - Signature :
+ * - Nom : PayDunya
+ * - API : POST /v1/checkout-invoice/create + GET /v1/checkout-invoice/confirm/{token}
+ * - Checkout : page hébergée (Wave SN / Orange Money SN)
+ * - Webhook : POST /api/webhooks/payments (form-urlencoded, hash SHA-512 MasterKey)
  * - Devise : XOF
- * - Frais :
- * - Paiement récurrent :
- * - Moyens : Wave / Orange Money / carte…
+ * - Paiement récurrent : non (un checkout par mois)
+ * - Moyens : wave-senegal, orange-money-senegal
  *
- * Tant que non documenté + clés absentes, garder MockPaymentProvider.
+ * Activer avec PAYMENT_PROVIDER=paydunya + clés (sinon Mock).
  */
 
 import type { PaymentProvider } from "@/lib/payments/types";

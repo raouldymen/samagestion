@@ -96,9 +96,14 @@ export function validatePreferencesForm(formData: FormData) {
 }
 
 export function validatePasswordChange(formData: FormData) {
+  const currentPassword = readString(formData, "currentPassword");
   const password = readString(formData, "password");
   const confirmPassword = readString(formData, "confirmPassword");
   const fieldErrors: FieldErrors = {};
+
+  if (!currentPassword) {
+    fieldErrors.currentPassword = "Saisissez votre ancien mot de passe.";
+  }
 
   if (!password) {
     fieldErrors.password = "Le mot de passe est obligatoire.";
@@ -111,7 +116,7 @@ export function validatePasswordChange(formData: FormData) {
   }
 
   return {
-    values: { password },
+    values: { currentPassword, password },
     fieldErrors,
     error: Object.keys(fieldErrors).length ? "Veuillez corriger les champs indiqués." : null,
   };

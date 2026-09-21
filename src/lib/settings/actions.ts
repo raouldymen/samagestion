@@ -229,9 +229,22 @@ export async function updatePasswordAction(
   }
 
   try {
-    await requireUser();
+    const user = await requireUser();
     await requireBusinessSession();
+    if (!user.email) {
+      return { error: "Impossible de vérifier votre ancien mot de passe. Utilisez la réinitialisation du mot de passe.", fieldErrors };
+    }
+
     const supabase = await createClient();
+    const { error: verificationError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: values.currentPassword,
+    });
+
+    if (verificationError) {
+      return { error: "L'ancien mot de passe est incorrect.", fieldErrors };
+    }
+
     const { error: updateError } = await supabase.auth.updateUser({
       password: values.password,
     });

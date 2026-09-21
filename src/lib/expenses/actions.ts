@@ -8,6 +8,8 @@ import { mapExpenseError } from "@/lib/expenses/errors";
 import { validateExpenseCategoryForm, validateExpenseForm } from "@/lib/expenses/validation";
 import { isRedirectError } from "@/lib/products/errors";
 import { createClient } from "@/lib/supabase/server";
+import { listExpenses } from "@/lib/expenses/queries";
+import type { SearchSuggestion } from "@/components/ui/list-search";
 import type { AuthResult } from "@/types";
 
 function revalidateExpenses(expenseId?: string) {
@@ -18,6 +20,21 @@ function revalidateExpenses(expenseId?: string) {
   if (expenseId) {
     revalidatePath(`/expenses/${expenseId}/edit`);
   }
+}
+
+export async function searchExpenseSuggestionsAction(query: string): Promise<SearchSuggestion[]> {
+  const session = await requireBusinessSession();
+
+  if (!can(session.role, "expenses.view")) {
+    return [];
+  }
+
+  const { items } = await listExpenses({ q: query, status: "all", period: "month", page: 1 });
+  return items.slice(0, 8).map((expense) => ({
+    value: expense.description,
+    label: expense.description,
+    detail: expense.categoryName ?? "Dépense",
+  }));
 }
 
 export async function createExpenseAction(
@@ -33,7 +50,7 @@ export async function createExpenseAction(
   try {
     const session = await requireBusinessSession();
 
-    if (!can(session.role, "expenses.manage")) {
+    if (!can(session.role, "expenses.create")) {
       return { error: "Vous n'avez pas l'autorisation de créer une dépense." };
     }
 

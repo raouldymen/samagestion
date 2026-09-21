@@ -22,6 +22,7 @@ export default async function TeamPage() {
   const [members, invitations] = await Promise.all([listTeamMembers(), listInvitations()]);
   const pendingInvites = invitations.filter((item) => item.status === "pending" || item.status === "expired");
   const canInvite = hasPermission(session.role, "team.invite");
+  const memberLabel = `${members.length} membre${members.length > 1 ? "s" : ""}`;
 
   return (
     <>
@@ -29,7 +30,7 @@ export default async function TeamPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Équipe</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {members.length} membre{members.length > 1 ? "s" : ""}
+            {memberLabel}
           </p>
         </div>
         {canInvite ? <InviteMemberDialog /> : null}
@@ -37,7 +38,7 @@ export default async function TeamPage() {
       <div className="hidden lg:block">
         <PageHeader
           title="Équipe"
-          description="Gérez les membres de votre commerce."
+          description={`Gérez les membres de votre commerce · ${memberLabel}.`}
           actions={
             <div className="flex gap-2">
               <Button href="/team/activity" variant="outline">
@@ -55,12 +56,28 @@ export default async function TeamPage() {
         </Button>
       </div>
 
-      <div className="grid gap-3 lg:hidden">
-        {members.map((member) => (
-          <TeamMemberCard key={member.id} member={member} />
-        ))}
-      </div>
-      <TeamTable members={members} />
+      {members.length > 0 ? (
+        <>
+          <div className="grid gap-3 lg:hidden">
+            {members.map((member) => (
+              <TeamMemberCard key={member.id} member={member} />
+            ))}
+          </div>
+          <TeamTable members={members} />
+        </>
+      ) : (
+        <Card className="py-12 text-center">
+          <h2 className="text-base font-semibold">Aucun membre dans l&apos;équipe</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Ajoutez un membre pour lui donner accès à votre boutique.
+          </p>
+          {canInvite ? (
+            <div className="mt-5 flex justify-center">
+              <InviteMemberDialog />
+            </div>
+          ) : null}
+        </Card>
+      )}
 
       {pendingInvites.length > 0 ? (
         <section className="mt-8">

@@ -99,18 +99,54 @@ export function serializeCsv(sheet: ExportSheet, basename: string): ExportFile {
   };
 }
 
-/**
- * Point d'extension Excel : brancher ici un sérialiseur xlsx
- * sans changer les routes ni les composants d'export.
- */
-export function serializeWorkbook(
+function worksheetName(name: string) {
+  return (name.replace(/[\\/:*?\[\]]/g, " ").trim() || "Export").slice(0, 31);
+}
+
+export async function serializeWorkbook(
   sheet: ExportSheet,
   basename: string,
   format: ExportFormat = "csv",
-): ExportFile {
-  if (format === "xlsx") {
+): Promise<ExportFile> {
+  if (format === "csv") {
     return serializeCsv(sheet, basename);
   }
 
-  return serializeCsv(sheet, basename);
+  return serializeWorkbookSheets([sheet], basename);
 }
+
+export async function serializeWorkbookSheets(
+  sheets: ExportSheet[],
+  basename: string,
+): Promise<ExportFile> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "SamaGestion";
+  workbook.created = new Date();
+
+  for (const sheet of sheets) {
+    const worksheet = workbook.addWorksheet(worksheetName(sheet.name));
+    const header = worksheet.addRow(sheet.headers);
+    header.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    header.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4F46E5" } };
+    header.alignment = { vertical: "middle" };
+
+    for (const row of sheet.rows) {
+      worksheet.addRow(row);
+    }
+
+    worksheet.views = [{ state: "frozen", ySplit: 1 }];
+    worksheet.autoFilter = { from: "A1", to: { row: Math.max(1, sheet.rows.length + 1), column: sheet.headers.length } };
+    worksheet.columns = sheet.headers.map((headerName, index) => ({
+      width: Math.min(42, Math.max(12, headerName.length + 3, ...sheet.rows.map((row) => String(row[index] ?? "").length + 2))),
+    }));
+  }
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  return {
+    filename: `${basename}.xlsx`,
+    mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    body: new Uint8Array(buffer),
+    format: "xlsx",
+  };
+}
+import ExcelJS from "exceljs";

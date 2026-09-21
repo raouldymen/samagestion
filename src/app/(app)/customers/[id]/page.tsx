@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
+import { DebtPaymentForm } from "@/components/customers/debt-payment-form";
 import { can } from "@/lib/auth/permissions";
 import { requireBusinessSession } from "@/lib/auth/session";
 import { getCustomerDetail } from "@/lib/customers/queries";
@@ -30,6 +31,7 @@ export default async function CustomerDetailPage({
   const { customer, stats, sales } = detail;
   const canEdit = can(session.role, "customers.edit");
   const canSell = can(session.role, "sales.create");
+  const canCollectDebt = canSell && session.role !== "seller";
 
   return (
     <>
@@ -118,10 +120,8 @@ export default async function CustomerDetailPage({
             <ul className="divide-y divide-border rounded-xl border border-border bg-card">
               {sales.map((sale) => (
                 <li key={sale.id}>
-                  <Link
-                    href={`/sales/${sale.id}`}
-                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted"
-                  >
+                  <div className="px-4 py-3 hover:bg-muted">
+                  <Link href={`/sales/${sale.id}`} className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium">{sale.saleNumber}</p>
                       <p className="text-xs text-muted-foreground">
@@ -139,6 +139,8 @@ export default async function CustomerDetailPage({
                       )}
                     </div>
                   </Link>
+                  {sale.amountDue > 0 && canCollectDebt ? <DebtPaymentForm saleId={sale.id} customerId={customer.id} maximum={sale.amountDue} /> : null}
+                  </div>
                 </li>
               ))}
             </ul>

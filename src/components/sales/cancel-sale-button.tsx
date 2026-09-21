@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { cancelSaleAction } from "@/lib/sales/actions";
+import { canCancelSaleUntil } from "@/lib/sales/constants";
 import type { Sale } from "@/types/sales";
 
 export function CancelSaleButton({ sale }: { sale: Sale }) {
@@ -11,7 +12,7 @@ export function CancelSaleButton({ sale }: { sale: Sale }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  if (sale.status === "cancelled") {
+  if (sale.status === "cancelled" || !canCancelSaleUntil(sale.createdAt)) {
     return null;
   }
 

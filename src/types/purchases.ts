@@ -17,6 +17,8 @@ export type SupplierListItem = Supplier & {
   purchasesCount: number;
   purchasesTotal: number;
   amountDue: number;
+  overdueAmount?: number;
+  nextDueDate?: string | null;
 };
 
 export type SupplierDetail = SupplierListItem & {
@@ -51,6 +53,7 @@ export type Purchase = {
   status: PurchaseStatus;
   notes: string | null;
   purchaseDate: string;
+  dueDate: string | null;
   createdBy: string;
   creatorName: string;
   createdAt: string;

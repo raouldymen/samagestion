@@ -6,7 +6,8 @@ import { can } from "@/lib/auth/permissions";
 import { requireBusinessSession } from "@/lib/auth/session";
 import { isRedirectError } from "@/lib/products/errors";
 import { mapPurchaseError } from "@/lib/purchases/errors";
-import { searchPurchaseProducts } from "@/lib/purchases/queries";
+import { listPurchases, searchPurchaseProducts } from "@/lib/purchases/queries";
+import type { SearchSuggestion } from "@/components/ui/list-search";
 import { validatePurchaseForm, validateSupplierForm } from "@/lib/purchases/validation";
 import { createClient } from "@/lib/supabase/server";
 import type { AuthResult } from "@/types";
@@ -28,6 +29,11 @@ function revalidatePurchases(purchaseId?: string, supplierId?: string) {
     revalidatePath(`/suppliers/${supplierId}`);
   }
 }
+export async function recordSupplierDebtPaymentAction(_prev: AuthResult, formData: FormData): Promise<AuthResult> {
+  const purchaseId = String(formData.get("purchaseId") ?? ""); const supplierId = String(formData.get("supplierId") ?? ""); const amount = Number(formData.get("amount")); const method = String(formData.get("paymentMethod") ?? "cash");
+  if (!purchaseId || !supplierId || !Number.isFinite(amount) || amount <= 0) return { error: "Saisissez un montant valide." };
+  try { const session = await requireBusinessSession(); if (!can(session.role,"purchases.manage")) return { error: "Vous n'avez pas l'autorisation de régler cette dette." }; const supabase = await createClient(); const { error } = await supabase.rpc("record_supplier_debt_payment", { p_purchase_id: purchaseId, p_amount: amount, p_payment_method: method as never }); if (error) return { error: "Le règlement n'a pas pu être enregistré. Vérifiez le montant restant." }; revalidatePurchases(purchaseId,supplierId); return { error:null, success:true, message:"Règlement enregistré. Un reçu est disponible dans l'historique." }; } catch (caught) { return { error: mapPurchaseError(caught) }; }
+}
 
 export async function searchPurchaseProductsAction(query: string): Promise<PurchaseProductOption[]> {
   const session = await requireBusinessSession();
@@ -37,6 +43,21 @@ export async function searchPurchaseProductsAction(query: string): Promise<Purch
   }
 
   return searchPurchaseProducts(query);
+}
+
+export async function searchPurchaseSuggestionsAction(query: string): Promise<SearchSuggestion[]> {
+  const session = await requireBusinessSession();
+
+  if (!can(session.role, "purchases.view")) {
+    return [];
+  }
+
+  const { items } = await listPurchases({ q: query, status: "all", period: "month", page: 1 });
+  return items.slice(0, 8).map((purchase) => ({
+    value: purchase.purchaseNumber,
+    label: purchase.purchaseNumber,
+    detail: purchase.supplierName ?? "Sans fournisseur",
+  }));
 }
 
 export async function createPurchaseAction(
@@ -75,6 +96,12 @@ export async function createPurchaseAction(
 
     if (rpcError || !purchase?.id) {
       return { error: mapPurchaseError(rpcError ?? new Error("PURCHASE_NOT_FOUND")) };
+    }
+
+    const dueDate = String(formData.get("dueDate") ?? "");
+    if (dueDate && purchase.amount_due > 0) {
+      const { error: dueError } = await supabase.rpc("set_purchase_due_date", { p_purchase_id: purchase.id, p_due_date: dueDate });
+      if (dueError) return { error: dueError.message === "INVALID_DUE_DATE" ? "L'échéance doit être postérieure à la date d'achat." : mapPurchaseError(dueError) };
     }
 
     revalidatePurchases(purchase.id, purchase.supplier_id ?? undefined);

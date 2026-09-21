@@ -1,6 +1,12 @@
 import type { PaymentMethod, PaymentStatus } from "../../types/sales";
 
 export const SALE_PAGE_SIZE = 20;
+export const SALE_CANCELLATION_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+export function canCancelSaleUntil(createdAt: string, now = Date.now()) {
+  const createdAtMs = new Date(createdAt).getTime();
+  return Number.isFinite(createdAtMs) && now - createdAtMs <= SALE_CANCELLATION_WINDOW_MS;
+}
 
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "cash", label: "Espèces" },

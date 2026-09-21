@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { SaleStatusBadge } from "@/components/sales/sale-status-badge";
 import { paymentMethodLabel } from "@/lib/sales/constants";
+import { shareReceiptPdf } from "@/lib/receipts/browser";
 import { formatDateTime, formatFcfaAbsolute } from "@/lib/utils/format";
 import type { Sale } from "@/types/sales";
 
@@ -28,18 +29,12 @@ export function SaleDetails({ sale }: { sale: Sale }) {
   ].join("\n");
 
   async function shareReceipt() {
-    const url = `${window.location.origin}${receiptHref}`;
-
-    if (navigator.share) {
-      await navigator.share({
-        title: `Reçu ${sale.saleNumber}`,
-        text: receiptText,
-        url,
-      });
-      return;
-    }
-
-    await navigator.clipboard.writeText(`${receiptText}\n${url}`);
+    await shareReceiptPdf({
+      pdfHref,
+      filename: `recu-${sale.saleNumber.replaceAll("/", "-")}.pdf`,
+      title: `Reçu ${sale.saleNumber}`,
+      text: receiptText,
+    });
   }
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
 import type { ReportPeriod } from "@/types/reports";
 
 const PERIODS: { value: ReportPeriod; label: string }[] = [
@@ -88,17 +88,15 @@ export function ReportPeriodSelector({
       </div>
       {period === "custom" ? (
         <div className="mt-3 grid grid-cols-2 gap-3">
-          <Input
+          <DateInput
             id="report-from"
             label="Du"
-            type="date"
             defaultValue={from ?? ""}
             onChange={(event) => updateDate("from", event.target.value)}
           />
-          <Input
+          <DateInput
             id="report-to"
             label="Au"
-            type="date"
             defaultValue={to ?? ""}
             onChange={(event) => updateDate("to", event.target.value)}
           />

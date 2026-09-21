@@ -9,5 +9,6 @@ export function useBusiness() {
     business: session.business,
     businessId: session.businessId,
     role: session.role,
+    hasActiveCashier: session.hasActiveCashier ?? false,
   };
 }

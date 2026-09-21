@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
@@ -9,9 +9,26 @@ import { useNotifications } from "@/components/notifications/notifications-provi
 export function NotificationBell() {
   const { unreadCount } = useNotifications();
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeEscape);
+    };
+  }, [open]);
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} non lues` : "Notifications"}
@@ -30,7 +47,7 @@ export function NotificationBell() {
             aria-label="Fermer les notifications"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute top-full right-0 z-50 mt-2">
+          <div className="fixed top-[calc(env(safe-area-inset-top)+4rem)] right-2 left-2 z-50 lg:absolute lg:top-0 lg:right-auto lg:left-full lg:mt-0 lg:ml-3">
             <NotificationDropdown onNavigate={() => setOpen(false)} />
           </div>
         </>

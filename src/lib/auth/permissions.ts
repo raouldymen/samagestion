@@ -91,6 +91,8 @@ const CASHIER_PERMISSIONS: readonly Permission[] = [
   "customers.create",
   "customers.edit",
   "products.view",
+  "expenses.view",
+  "expenses.create",
   "settings.view",
 ];
 

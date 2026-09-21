@@ -17,6 +17,7 @@ import {
 import { getDashboardAlerts } from "@/lib/notifications/queries";
 import { getSubscriptionBundle } from "@/lib/subscriptions/queries";
 import { hasFeature } from "@/lib/subscriptions/limits";
+import { getCashierCheckoutSummary, getCashierExpenseSummary } from "@/lib/sales/queries";
 import { parseDashboardPeriod } from "@/lib/finance/summary";
 import type { StatMetric } from "@/types";
 
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
   title: "Tableau de bord",
 };
 
-type SearchParams = Promise<{ period?: string }>;
+type SearchParams = Promise<{ period?: string; from?: string; to?: string }>;
 
 export default async function DashboardPage({
   searchParams,
@@ -43,8 +44,47 @@ export default async function DashboardPage({
   const canSell = hasPermission(session.role, "sales.create");
   const canStock = hasPermission(session.role, "stock.view");
 
+  if (session.role === "cashier") {
+    const [checkout, expenses] = await Promise.all([getCashierCheckoutSummary(), getCashierExpenseSummary()]);
+    const metrics: StatMetric[] = [
+      {
+        id: "salesCount",
+        label: "Ventes encaissées aujourd'hui",
+        amount: checkout.count,
+        suffix: checkout.count > 1 ? "ventes" : "vente",
+      },
+      {
+        id: "collected",
+        label: "Total encaissé",
+        amount: checkout.total,
+      },
+      ...(expenses.total > 0 ? [{
+        id: "expense" as const,
+        label: "Dépenses du jour",
+        amount: expenses.total,
+      }] : []),
+    ];
+
+    return (
+      <>
+        <DashboardHeader planSlug={bundle.plan.slug} />
+        <section aria-label="Résumé de caisse" className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4">
+          {metrics.map((metric) => (
+            <StatCard key={metric.id} metric={metric} />
+          ))}
+        </section>
+        <div className="mt-4">
+          <QuickActions />
+        </div>
+      </>
+    );
+  }
+
   if (financial) {
-    const [stats, alerts] = await Promise.all([getDashboardStats(period), getDashboardAlerts()]);
+    const [stats, alerts] = await Promise.all([
+      getDashboardStats(period, params.from, params.to),
+      getDashboardAlerts(),
+    ]);
     const { current, trends } = stats;
 
     const primary: StatMetric[] = [
@@ -111,7 +151,7 @@ export default async function DashboardPage({
     return (
       <>
         <DashboardHeader planSlug={bundle.plan.slug} />
-        <PeriodSelector period={period} />
+        <PeriodSelector period={period} from={params.from} to={params.to} />
         <DashboardAlerts
           outOfStock={alerts.outOfStock}
           lowStock={alerts.lowStock}

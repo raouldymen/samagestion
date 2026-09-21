@@ -44,7 +44,7 @@ export async function buildReportExport(input: {
   const sheet = await loadExportSheet(input.dataset, input.period, input.from, input.to);
   const basename = `${DATASET_FILENAMES[input.dataset]}-${range.fromDate}-${range.toDateInclusive}`;
 
-  return serializeWorkbook(sheet, basename, input.format ?? "csv");
+  return await serializeWorkbook(sheet, basename, input.format ?? "csv");
 }
 
 async function loadExportSheet(

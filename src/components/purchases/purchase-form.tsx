@@ -7,6 +7,7 @@ import { PurchaseProductSearch } from "@/components/purchases/purchase-product-s
 import { PurchaseSummary } from "@/components/purchases/purchase-summary";
 import { SupplierSelector } from "@/components/purchases/supplier-selector";
 import { Button } from "@/components/ui/button";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { createPurchaseAction } from "@/lib/purchases/actions";
 import { purchaseCartSubtotal, purchaseTotals } from "@/lib/purchases/constants";
@@ -43,6 +44,7 @@ export function PurchaseForm({
   const [amountPaid, setAmountPaid] = useState(0);
   const [paidTouched, setPaidTouched] = useState(false);
   const [purchaseDate, setPurchaseDate] = useState(todayInDakar);
+  const [dueDate, setDueDate] = useState("");
   const [state, formAction, pending] = useActionState(createPurchaseAction, { error: null });
 
   const subtotal = purchaseCartSubtotal(cart);
@@ -114,15 +116,15 @@ export function PurchaseForm({
           onChange={(event) => setDiscount(Number(event.target.value) || 0)}
           error={state.fieldErrors?.discount}
         />
-        <Input
+        <DateInput
           id="purchaseDate"
           name="purchaseDate"
           label="Date"
-          type="date"
           required
           value={purchaseDate}
           onChange={(event) => setPurchaseDate(event.target.value)}
           error={state.fieldErrors?.purchaseDate}
+          showToday
         />
       </div>
       <PaymentSection
@@ -138,9 +140,7 @@ export function PurchaseForm({
         }}
       />
       {displayTotals.amountDue > 0 ? (
-        <p className="text-sm font-medium">
-          Dette fournisseur : {formatFcfaAbsolute(displayTotals.amountDue)}
-        </p>
+        <div className="grid gap-3 sm:grid-cols-2"><p className="self-end text-sm font-medium">Dette fournisseur : {formatFcfaAbsolute(displayTotals.amountDue)}</p><DateInput id="dueDate" name="dueDate" label="Échéance de paiement" value={dueDate} onChange={(event) => setDueDate(event.target.value)} min={purchaseDate} /></div>
       ) : null}
       {state.error ? (
         <p role="alert" className="text-sm text-danger">
@@ -148,7 +148,7 @@ export function PurchaseForm({
         </p>
       ) : null}
       <Button type="submit" size="lg" loading={pending} disabled={cart.length === 0}>
-        Enregistrer l&apos;achat
+        {pending ? "Enregistrement..." : "Enregistrer l'achat"}
       </Button>
     </form>
   );

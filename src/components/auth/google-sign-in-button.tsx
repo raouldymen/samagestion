@@ -1,8 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { Browser } from "@capacitor/browser";
+import { useActionState, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
+import { mapAuthError } from "@/lib/auth/errors";
+import { NATIVE_AUTH_CALLBACK, isNativeApp } from "@/lib/auth/native";
 import { signInWithGoogle } from "@/lib/auth/actions";
+import { createClient } from "@/lib/supabase/client";
+
+function subscribe() {
+  return () => undefined;
+}
 
 function GoogleMark() {
   return (
@@ -29,16 +37,51 @@ function GoogleMark() {
 
 export function GoogleSignInButton({ next = "" }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signInWithGoogle, { error: null });
+  const nativeApp = useSyncExternalStore(subscribe, isNativeApp, () => false);
+  const [nativeError, setNativeError] = useState<string | null>(null);
+  const [nativePending, setNativePending] = useState(false);
+
+  const nativeGoogleSignIn = async () => {
+    setNativeError(null);
+    setNativePending(true);
+
+    try {
+      const { data, error } = await createClient().auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: NATIVE_AUTH_CALLBACK,
+          skipBrowserRedirect: true,
+          queryParams: {
+            access_type: "offline",
+            prompt: "select_account",
+          },
+        },
+      });
+
+      if (error || !data.url) {
+        throw error ?? new Error("oauth");
+      }
+
+      await Browser.open({ url: data.url });
+    } catch (error) {
+      setNativeError(mapAuthError(error));
+    } finally {
+      setNativePending(false);
+    }
+  };
+
+  const error = nativeApp ? nativeError : state.error;
+  const loading = nativeApp ? nativePending : pending;
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form action={nativeApp ? nativeGoogleSignIn : formAction} className="flex flex-col gap-3">
       {next ? <input type="hidden" name="next" value={next} /> : null}
-      {state.error ? (
+      {error ? (
         <p role="alert" className="text-sm text-danger">
-          {state.error}
+          {error}
         </p>
       ) : null}
-      <Button type="submit" variant="outline" size="lg" loading={pending} className="w-full">
+      <Button type="submit" variant="outline" size="lg" loading={loading} className="w-full">
         <GoogleMark />
         Continuer avec Google
       </Button>

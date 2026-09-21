@@ -1,4 +1,4 @@
-export type DashboardPeriod = "today" | "7d" | "month" | "previous_month";
+export type DashboardPeriod = "today" | "7d" | "month" | "previous_month" | "custom";
 
 export type FinancialSummary = {
   revenue: number;

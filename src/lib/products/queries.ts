@@ -13,6 +13,7 @@ import type {
   ProductListResult,
   ProductStats,
   StockMovement,
+  InventoryProduct,
 } from "@/types/products";
 import type { ProductUnit, StockStatus } from "@/types/database";
 
@@ -54,6 +55,22 @@ async function signImagePath(path: string | null) {
   return data?.signedUrl ?? null;
 }
 
+async function signImagePaths(paths: Array<string | null>) {
+  const uniquePaths = [...new Set(paths.filter((path): path is string => Boolean(path)))];
+  if (uniquePaths.length === 0) return new Map<string, string>();
+
+  const supabase = await createClient();
+  const { data } = await supabase.storage
+    .from(PRODUCT_IMAGE_BUCKET)
+    .createSignedUrls(uniquePaths, 60 * 60);
+
+  return new Map(
+    (data ?? [])
+      .filter((item) => Boolean(item.path && item.signedUrl))
+      .map((item) => [item.path, item.signedUrl as string]),
+  );
+}
+
 type ProductRow = {
   id: string;
   business_id: string;
@@ -89,7 +106,11 @@ async function categoryNamesById(ids: Array<string | null>) {
   return new Map((data ?? []).map((category) => [category.id, category.name]));
 }
 
-async function mapProduct(row: ProductRow, categoryName: string | null): Promise<Product> {
+async function mapProduct(
+  row: ProductRow,
+  categoryName: string | null,
+  imageUrl?: string | null,
+): Promise<Product> {
   const quantity = asNumber(row.stock_quantity);
   const minimum = asNumber(row.minimum_stock);
 
@@ -107,7 +128,7 @@ async function mapProduct(row: ProductRow, categoryName: string | null): Promise
     minimumStock: minimum,
     unit: asUnit(row.unit),
     imagePath: row.image_url,
-    imageUrl: await signImagePath(row.image_url),
+    imageUrl: imageUrl === undefined ? await signImagePath(row.image_url) : imageUrl,
     isActive: row.is_active,
     stockStatus: asStockStatus(row.stock_status, quantity, minimum),
     createdAt: row.created_at,
@@ -131,6 +152,20 @@ export async function getProductStats(): Promise<ProductStats> {
     lowStock: asNumber(row.low_stock),
     stockValue: asNumber(row.stock_value),
   };
+}
+
+export async function listInventoryProducts(): Promise<InventoryProduct[]> {
+  const session = await requireBusinessSession();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, name, sku, stock_quantity, unit")
+    .eq("business_id", session.businessId)
+    .eq("is_active", true)
+    .order("name")
+    .limit(500);
+  if (error || !data) return [];
+  return data.map((product) => ({ id: product.id, name: product.name, sku: product.sku, stockQuantity: asNumber(product.stock_quantity), unit: asUnit(product.unit) }));
 }
 
 export async function listCategories(): Promise<Category[]> {
@@ -194,10 +229,17 @@ export async function listProducts(filters: ProductListFilters = {}): Promise<Pr
     return { items: [], total: 0, page, pageSize: PRODUCT_PAGE_SIZE };
   }
 
-  const names = await categoryNamesById(data.map((row) => row.category_id));
+  const [names, imageUrls] = await Promise.all([
+    categoryNamesById(data.map((row) => row.category_id)),
+    signImagePaths(data.map((row) => row.image_url)),
+  ]);
   const items = await Promise.all(
     data.map((row) =>
-      mapProduct(row, row.category_id ? (names.get(row.category_id) ?? null) : null),
+      mapProduct(
+        row,
+        row.category_id ? (names.get(row.category_id) ?? null) : null,
+        row.image_url ? (imageUrls.get(row.image_url) ?? null) : null,
+      ),
     ),
   );
 

@@ -146,38 +146,46 @@ export async function listSuppliersWithStats(): Promise<SupplierListItem[]> {
     listSuppliers(),
     supabase
       .from("purchases")
-      .select("supplier_id, total, amount_due, status")
+      .select("supplier_id, total, amount_due, due_date, status")
       .eq("business_id", session.businessId)
       .eq("status", "completed"),
   ]);
 
-  const stats = new Map<string, { count: number; total: number; due: number }>();
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Dakar" }).format(new Date());
+  const stats = new Map<string, { count: number; total: number; due: number; overdue: number; nextDueDate: string | null }>();
 
   for (const row of purchases.data ?? []) {
     if (!row.supplier_id) {
       continue;
     }
 
-    const current = stats.get(row.supplier_id) ?? { count: 0, total: 0, due: 0 };
+    const current = stats.get(row.supplier_id) ?? { count: 0, total: 0, due: 0, overdue: 0, nextDueDate: null };
     current.count += 1;
     current.total += asNumber(row.total);
     current.due += asNumber(row.amount_due);
+    if (asNumber(row.amount_due) > 0 && row.due_date) {
+      if (row.due_date < today) current.overdue += asNumber(row.amount_due);
+      if (!current.nextDueDate || row.due_date < current.nextDueDate) current.nextDueDate = row.due_date;
+    }
     stats.set(row.supplier_id, current);
   }
 
   return suppliers.map((supplier) => {
-    const current = stats.get(supplier.id) ?? { count: 0, total: 0, due: 0 };
+    const current = stats.get(supplier.id) ?? { count: 0, total: 0, due: 0, overdue: 0, nextDueDate: null };
     return {
       ...supplier,
       purchasesCount: current.count,
       purchasesTotal: current.total,
       amountDue: current.due,
+      overdueAmount: current.overdue,
+      nextDueDate: current.nextDueDate,
     };
   });
 }
 
 export async function getSupplierDebts(): Promise<SupplierDebtsSummary> {
-  const items = (await listSuppliersWithStats()).filter((supplier) => supplier.amountDue > 0);
+  const items = (await listSuppliersWithStats()).filter((supplier) => supplier.amountDue > 0)
+    .sort((a, b) => (b.overdueAmount ?? 0) - (a.overdueAmount ?? 0) || (a.nextDueDate ?? "9999-12-31").localeCompare(b.nextDueDate ?? "9999-12-31"));
 
   return {
     suppliersCount: items.length,
@@ -288,7 +296,7 @@ export async function listPurchases(filters: PurchaseListFilters = {}): Promise<
   let query = supabase
     .from("purchases")
     .select(
-      "id, business_id, supplier_id, purchase_number, subtotal, discount, total, amount_paid, amount_due, payment_status, payment_method, status, notes, purchase_date, created_by, created_at, updated_at",
+      "id, business_id, supplier_id, purchase_number, subtotal, discount, total, amount_paid, amount_due, payment_status, payment_method, status, notes, purchase_date, due_date, created_by, created_at, updated_at",
       { count: "exact" },
     )
     .eq("business_id", session.businessId)
@@ -380,6 +388,7 @@ export async function listPurchases(filters: PurchaseListFilters = {}): Promise<
     status: asPurchaseStatus(row.status),
     notes: row.notes,
     purchaseDate: row.purchase_date,
+    dueDate: row.due_date,
     createdBy: row.created_by,
     creatorName: creatorNames.get(row.created_by) || "Membre",
     createdAt: row.created_at,
@@ -401,7 +410,7 @@ export async function getPurchase(purchaseId: string): Promise<Purchase | null> 
   const { data, error } = await supabase
     .from("purchases")
     .select(
-      "id, business_id, supplier_id, purchase_number, subtotal, discount, total, amount_paid, amount_due, payment_status, payment_method, status, notes, purchase_date, created_by, created_at, updated_at",
+      "id, business_id, supplier_id, purchase_number, subtotal, discount, total, amount_paid, amount_due, payment_status, payment_method, status, notes, purchase_date, due_date, created_by, created_at, updated_at",
     )
     .eq("id", purchaseId)
     .eq("business_id", session.businessId)
@@ -439,6 +448,7 @@ export async function getPurchase(purchaseId: string): Promise<Purchase | null> 
     status: asPurchaseStatus(data.status),
     notes: data.notes,
     purchaseDate: data.purchase_date,
+    dueDate: data.due_date,
     createdBy: data.created_by,
     creatorName: profile?.full_name || "Membre",
     createdAt: data.created_at,

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Banknote, Plus } from "lucide-react";
 import { Pagination } from "@/components/products/pagination";
 import { SaleCard } from "@/components/sales/sale-card";
 import { SaleFilters } from "@/components/sales/sale-filters";
+import { SellerSalesLiveRefresh } from "@/components/sales/seller-sales-live-refresh";
 import { SalesTable } from "@/components/sales/sales-table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -44,8 +45,8 @@ function asPaymentStatus(value?: string): PaymentStatus | "all" | undefined {
   return undefined;
 }
 
-function asSaleStatus(value?: string): SaleStatus | "all" | undefined {
-  if (value === "completed" || value === "cancelled" || value === "all") {
+function asSaleStatus(value?: string): SaleStatus | "pending" | "all" | undefined {
+  if (value === "completed" || value === "cancelled" || value === "pending" || value === "all") {
     return value;
   }
 
@@ -88,25 +89,41 @@ export default async function SalesPage({
 
   return (
     <>
+      {session.role === "seller" ? <SellerSalesLiveRefresh userId={session.user.id} /> : null}
       <div className="mb-5 flex items-center justify-between gap-3 lg:hidden">
         <h1 className="text-2xl font-semibold tracking-tight">Ventes</h1>
-        {can(session.role, "sales.create") ? (
-          <Button href="/sales/new" size="icon" aria-label="Nouvelle vente">
-            <Plus className="size-5" aria-hidden="true" />
-          </Button>
-        ) : null}
+        <div className="flex gap-2">
+          {session.role !== "seller" && session.role !== "owner" && can(session.role, "sales.create") ? (
+            <Button href="/sales/checkout" size="icon" variant="outline" aria-label="Ouvrir la caisse">
+              <Banknote className="size-5" aria-hidden="true" />
+            </Button>
+          ) : null}
+          {can(session.role, "sales.create") ? (
+            <Button href="/sales/new" size="icon" aria-label="Nouvelle vente">
+              <Plus className="size-5" aria-hidden="true" />
+            </Button>
+          ) : null}
+        </div>
       </div>
       <div className="hidden lg:block">
         <PageHeader
           title="Ventes"
           description="Consultez et enregistrez vos ventes."
           actions={
-            can(session.role, "sales.create") ? (
-              <Button href="/sales/new">
-                <Plus className="size-4" aria-hidden="true" />
-                Nouvelle vente
-              </Button>
-            ) : null
+            <div className="flex gap-2">
+              {session.role !== "seller" && session.role !== "owner" && can(session.role, "sales.create") ? (
+                <Button href="/sales/checkout" variant="outline">
+                  <Banknote className="size-4" aria-hidden="true" />
+                  Caisse
+                </Button>
+              ) : null}
+              {can(session.role, "sales.create") ? (
+                <Button href="/sales/new">
+                  <Plus className="size-4" aria-hidden="true" />
+                  Nouvelle vente
+                </Button>
+              ) : null}
+            </div>
           }
         />
       </div>

@@ -70,7 +70,11 @@ function parseActivity(value: Json): DashboardActivity | null {
   };
 }
 
-export async function getDashboardStats(period: DashboardPeriod): Promise<DashboardStats> {
+export async function getDashboardStats(
+  period: DashboardPeriod,
+  from?: string,
+  to?: string,
+): Promise<DashboardStats> {
   const session = await requireBusinessSession();
 
   if (!hasPermission(session.role, "reports.financial")) {
@@ -102,7 +106,7 @@ export async function getDashboardStats(period: DashboardPeriod): Promise<Dashbo
       payablesOpen: 0,
     };
   }
-  const range = dashboardPeriodRange(period);
+  const range = dashboardPeriodRange(period, new Date(), from, to);
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("get_dashboard_bundle", {
     p_from: range.from,

@@ -27,6 +27,7 @@ export type CurrentSession = {
   business: Business;
   businessId: string;
   role: BusinessRole;
+  hasActiveCashier?: boolean;
 };
 
 export type NavItem = {
@@ -34,6 +35,8 @@ export type NavItem = {
   label: string;
   icon: LucideIcon;
   permission?: string;
+  roles?: readonly BusinessRole[];
+  requiresActiveCashier?: boolean;
 };
 
 export type StatMetricId =

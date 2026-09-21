@@ -40,7 +40,7 @@ export function NotificationItem({
         <input type="hidden" name="notificationId" value={notification.id} />
         <button type="submit" className="w-full text-left">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-semibold">{NOTIFICATION_TYPE_LABELS[notification.type]}</p>
+            <p className="min-w-0 break-words text-sm font-semibold">{NOTIFICATION_TYPE_LABELS[notification.type]}</p>
             <div className="flex shrink-0 items-center gap-2">
               <NotificationBadge priority={notification.priority} />
               <span className="text-xs text-muted-foreground">
@@ -48,8 +48,8 @@ export function NotificationItem({
               </span>
             </div>
           </div>
-          <p className="mt-1 text-sm text-foreground">{notification.title}</p>
-          <p className="mt-0.5 text-sm text-muted-foreground">{notification.message}</p>
+          <p className="mt-1 break-words text-sm text-foreground">{notification.title}</p>
+          <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-muted-foreground">{notification.message}</p>
         </button>
       </form>
       {compact ? null : (

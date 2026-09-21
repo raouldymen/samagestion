@@ -58,7 +58,34 @@ export async function listTeamMembers(): Promise<TeamMember[]> {
   const rows = Array.isArray(data) ? data : data ? [data] : [];
 
   if (error) {
-    return [];
+    // La liste reste disponible même si la fonction SQL dédiée est momentanément
+    // indisponible (par exemple juste après une mise à jour de la base).
+    const { data: fallbackRows } = await supabase
+      .from("business_members")
+      .select("id, user_id, role, status, created_at, updated_at")
+      .eq("business_id", session.businessId)
+      .in("status", ["active", "invited", "suspended"])
+      .order("created_at", { ascending: true });
+
+    const userIds = [...new Set((fallbackRows ?? []).map((row) => row.user_id))];
+    const { data: profiles } = userIds.length
+      ? await supabase.from("profiles").select("id, full_name").in("id", userIds)
+      : { data: [] as Array<{ id: string; full_name: string | null }> };
+    const names = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]));
+
+    return (fallbackRows ?? []).map((row) => {
+      return {
+        id: row.id,
+        userId: row.user_id,
+        fullName: names.get(row.user_id) || "Membre",
+        email: "Non renseigné",
+        role: asRole(row.role),
+        status: asStatus(row.status),
+        createdAt: row.created_at,
+        lastActivityAt: row.updated_at,
+        isPrimaryOwner: row.user_id === session.business.ownerId || row.role === "owner",
+      };
+    });
   }
 
   return rows.map((row) => ({

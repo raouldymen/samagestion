@@ -28,6 +28,10 @@ export function mapSaleError(error: unknown): string {
     return "Mode de paiement invalide.";
   }
 
+  if (lower.includes("cashier_checkout_required")) {
+    return "Cette vente doit être envoyée à la caisse pour être encaissée.";
+  }
+
   if (lower.includes("invalid_customer")) {
     return "Ce client n'appartient pas à votre commerce.";
   }
@@ -38,6 +42,10 @@ export function mapSaleError(error: unknown): string {
 
   if (lower.includes("sale_already_cancelled")) {
     return "Cette vente est déjà annulée.";
+  }
+
+  if (lower.includes("sale_cancellation_window_expired")) {
+    return "Une vente ne peut plus être annulée après 24 heures.";
   }
 
   if (lower.includes("sale_not_found") || lower.includes("forbidden")) {

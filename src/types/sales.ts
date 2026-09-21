@@ -53,7 +53,10 @@ export type Sale = {
   items: SaleItem[];
 };
 
-export type SaleListItem = Omit<Sale, "items">;
+export type SaleListItem = Omit<Sale, "items"> & {
+  awaitingCashier?: boolean;
+  isReturned?: boolean;
+};
 
 export type CartLine = {
   productId: string;
@@ -69,7 +72,7 @@ export type SaleListFilters = {
   from?: string;
   to?: string;
   paymentStatus?: PaymentStatus | "all";
-  status?: SaleStatus | "all";
+  status?: SaleStatus | "pending" | "all";
   paymentMethod?: PaymentMethod | "all";
   page?: number;
 };

@@ -182,6 +182,7 @@ type PurchaseRow = {
   status: PurchaseStatus;
   notes: string | null;
   purchase_date: string;
+  due_date: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -463,6 +464,12 @@ export type Database = {
         };
         Relationships: [];
       };
+      sale_returns: {
+        Row: { id: string; business_id: string; sale_id: string; amount: number; reason: string | null; returned_by: string; returned_at: string };
+        Insert: { id?: string; business_id: string; sale_id: string; amount: number; reason?: string | null; returned_by: string; returned_at?: string };
+        Update: { id?: string; business_id?: string; sale_id?: string; amount?: number; reason?: string | null; returned_by?: string; returned_at?: string };
+        Relationships: [];
+      };
       sale_items: {
         Row: SaleItemRow;
         Insert: {
@@ -584,6 +591,7 @@ export type Database = {
           status?: PurchaseStatus;
           notes?: string | null;
           purchase_date?: string;
+          due_date?: string | null;
           created_by: string;
           created_at?: string;
           updated_at?: string;
@@ -603,6 +611,7 @@ export type Database = {
           status?: PurchaseStatus;
           notes?: string | null;
           purchase_date?: string;
+          due_date?: string | null;
           created_by?: string;
           created_at?: string;
           updated_at?: string;
@@ -1096,6 +1105,10 @@ export type Database = {
         };
         Returns: StockMovementRow;
       };
+      apply_inventory_count: {
+        Args: { p_items: Json };
+        Returns: number;
+      };
       create_product: {
         Args: {
           p_name: string;
@@ -1177,6 +1190,94 @@ export type Database = {
         };
         Returns: SaleRow;
       };
+      return_sale_for_credit: {
+        Args: { p_sale_id: string; p_reason?: string | null };
+        Returns: { id: string; business_id: string; sale_id: string; amount: number; reason: string | null; returned_by: string; returned_at: string };
+      };
+      return_sale_items: { Args: { p_sale_id: string; p_items: Json; p_reason?: string | null }; Returns: { id: string; business_id: string; sale_id: string; amount: number; reason: string | null; returned_by: string; returned_at: string }; };
+      create_owner_sale: {
+        Args: {
+          p_items: Json;
+          p_discount?: number;
+          p_customer_id?: string | null;
+          p_payment_method?: PaymentMethod;
+          p_amount_paid?: number;
+          p_notes?: string | null;
+        };
+        Returns: SaleRow;
+      };
+      list_owner_sale_collections: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      list_cashier_today_sales: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      mark_owner_sale_collection: {
+        Args: { p_collection_id: string };
+        Returns: undefined;
+      };
+      queue_sale_for_cashier: {
+        Args: {
+          p_items: Json;
+          p_discount?: number;
+          p_customer_id?: string | null;
+          p_notes?: string | null;
+        };
+        Returns: Json;
+      };
+      list_cashier_sale_queue: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      list_my_pending_cashier_sales: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      cashier_checkout_is_required: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      cashier_checkout_summary: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      cashier_expenses_summary: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      cashier_closure_summary: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      close_cashier_day: {
+        Args: { p_counted_amount: number; p_notes?: string | null };
+        Returns: {
+          id: string;
+          business_id: string;
+          cashier_id: string;
+          cash_date: string;
+          expected_amount: number;
+          counted_amount: number;
+          difference_amount: number;
+          notes: string | null;
+          closed_at: string;
+        };
+      };
+      list_cashier_daily_closures: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      cancel_cashier_sale: { Args: { p_queue_id: string }; Returns: undefined };
+      update_cashier_sale: {
+        Args: { p_queue_id: string; p_items: Json; p_discount?: number; p_customer_id?: string | null; p_notes?: string | null };
+        Returns: undefined;
+      };
+      complete_cashier_sale: {
+        Args: { p_queue_id: string; p_payment_method: PaymentMethod; p_amount_paid: number };
+        Returns: SaleRow;
+      };
       cancel_sale: {
         Args: { p_sale_id: string };
         Returns: SaleRow;
@@ -1215,6 +1316,10 @@ export type Database = {
         Args: { p_customer_id: string };
         Returns: Json;
       };
+      record_customer_debt_payment: {
+        Args: { p_sale_id: string; p_amount: number; p_payment_method: PaymentMethod; p_notes?: string | null };
+        Returns: SaleRow;
+      };
       get_today_sales_stats: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -1225,6 +1330,10 @@ export type Database = {
       ensure_default_expense_categories: {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
+      };
+      list_expense_categories: {
+        Args: Record<PropertyKey, never>;
+        Returns: ExpenseCategoryRow[];
       };
       create_expense_category: {
         Args: { p_name: string };
@@ -1404,6 +1513,11 @@ export type Database = {
         };
         Returns: PurchaseRow;
       };
+      set_purchase_due_date: {
+        Args: { p_purchase_id: string; p_due_date: string };
+        Returns: PurchaseRow;
+      };
+      record_supplier_debt_payment: { Args: { p_purchase_id: string; p_amount: number; p_payment_method: PaymentMethod }; Returns: PurchaseRow; };
       cancel_purchase: {
         Args: { p_purchase_id: string };
         Returns: PurchaseRow;

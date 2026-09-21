@@ -69,6 +69,7 @@ export default async function ExpensesPage({
   const session = await requireBusinessSession();
   const params = await searchParams;
   const canManage = can(session.role, "expenses.manage");
+  const canCreate = can(session.role, "expenses.create");
   const [stats, categories, result] = await Promise.all([
     getExpenseStats(),
     listExpenseCategories(),
@@ -88,7 +89,7 @@ export default async function ExpensesPage({
     <>
       <div className="mb-5 flex items-center justify-between gap-3 lg:hidden">
         <h1 className="text-2xl font-semibold tracking-tight">Dépenses</h1>
-        {canManage ? (
+        {canCreate ? (
           <Button href="/expenses/new" size="icon" aria-label="Ajouter une dépense">
             <Plus className="size-5" aria-hidden="true" />
           </Button>
@@ -101,7 +102,7 @@ export default async function ExpensesPage({
           actions={
             <>
               {canManage ? <ExpenseCategoryManager categories={categories} /> : null}
-              {canManage ? (
+              {canCreate ? (
                 <Button href="/expenses/new">
                   <Plus className="size-4" aria-hidden="true" />
                   Ajouter une dépense
@@ -120,7 +121,7 @@ export default async function ExpensesPage({
             <p className="mt-1 text-sm text-muted-foreground">
               Enregistrez une dépense pour suivre vos sorties d&apos;argent.
             </p>
-            {canManage ? (
+            {canCreate ? (
               <Button href="/expenses/new" className="mt-4">
                 Ajouter une dépense
               </Button>
@@ -143,7 +144,7 @@ export default async function ExpensesPage({
           </>
         )}
       </div>
-      {canManage ? (
+      {canCreate ? (
         <Link
           href="/expenses/new"
           className="fixed right-4 z-30 inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg lg:hidden"

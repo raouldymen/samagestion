@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { BusinessSettings } from "@/components/settings/business-settings";
 import { PageHeader } from "@/components/ui/page-header";
-import { requirePermission } from "@/lib/auth/access";
+import { requireSettingsSection } from "@/lib/settings/access";
 import { hasPermission } from "@/lib/auth/permissions";
 import { getBusinessSettings } from "@/lib/settings/queries";
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function BusinessSettingsPage() {
-  const session = await requirePermission("settings.view");
+  const session = await requireSettingsSection("business");
   const settings = await getBusinessSettings();
 
   return (

@@ -9,6 +9,13 @@ import {
 import { addSubscriptionMonth, statusLabel } from "@/lib/payments/payment-service";
 import { signWebhookPayload, verifyWebhookSignature } from "@/lib/payments/signature";
 import { getPaymentProvider } from "@/lib/payments/payment-provider";
+import {
+  expectedPaydunyaHash,
+  mapPaydunyaStatus,
+  parsePaydunyaIpn,
+  paydunyaModeToEnvironment,
+  verifyPaydunyaHash,
+} from "@/lib/payments/providers/paydunya-ipn";
 
 describe("période calendaire", () => {
   it("ajoute un mois calendaire (27 août → 27 septembre)", () => {
@@ -126,5 +133,39 @@ describe("paiement mobile", () => {
     assert.equal(normalizeSenegalPhone("221771234567"), "+221771234567");
     assert.equal(normalizeSenegalPhone("001234567"), null);
     assert.equal(normalizeSenegalPhone("77123"), null);
+  });
+});
+
+describe("PayDunya IPN", () => {
+  it("est sélectionné par PAYMENT_PROVIDER", () => {
+    process.env.PAYMENT_PROVIDER = "paydunya";
+    assert.equal(getPaymentProvider().name, "paydunya");
+    process.env.PAYMENT_PROVIDER = "mock";
+  });
+
+  it("vérifie le hash SHA-512 de la Master Key", () => {
+    const master = "master-key-test";
+    const hash = expectedPaydunyaHash(master);
+    assert.equal(verifyPaydunyaHash(hash, master), true);
+    assert.equal(verifyPaydunyaHash(hash.slice(0, 10), master), false);
+    assert.equal(mapPaydunyaStatus("completed"), "successful");
+    assert.equal(mapPaydunyaStatus("cancelled"), "cancelled");
+    assert.equal(paydunyaModeToEnvironment("live"), "production");
+  });
+
+  it("parse un IPN form-urlencoded imbriqué", () => {
+    const body = new URLSearchParams({
+      "data[hash]": "abc",
+      "data[status]": "completed",
+      "data[mode]": "test",
+      "data[invoice][token]": "test_TOKEN",
+      "data[invoice][total_amount]": "5000",
+      "data[custom_data][internal_reference]": "SMG-REF",
+    }).toString();
+    const ipn = parsePaydunyaIpn(body, "application/x-www-form-urlencoded");
+    assert.ok(ipn);
+    assert.equal(ipn?.token, "test_TOKEN");
+    assert.equal(ipn?.amount, 5000);
+    assert.equal(ipn?.internalReference, "SMG-REF");
   });
 });

@@ -112,7 +112,7 @@ export function MemberActions({ member }: { member: TeamMember }) {
               disabled={pending}
               onClick={() =>
                 confirmAndRun(
-                  "Retirer de l'équipe ?\nLe compte ne sera pas supprimé.",
+                  "Supprimer ce membre de la boutique ?\nSon compte et son historique seront conservés.",
                   async () => {
                     const form = new FormData();
                     form.set("memberId", member.id);
@@ -121,7 +121,7 @@ export function MemberActions({ member }: { member: TeamMember }) {
                 )
               }
             >
-              Retirer de l&apos;équipe
+              Supprimer de la boutique
             </button>
           ) : null}
         </div>

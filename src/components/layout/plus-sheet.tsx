@@ -6,6 +6,7 @@ import { LogOut, X } from "lucide-react";
 import { PLUS_NAV, navForRole } from "@/lib/navigation";
 import { signOut } from "@/lib/auth/actions";
 import { useBusiness } from "@/hooks/use-business";
+import { canAccessSettingsSection } from "@/lib/settings/sections";
 
 type PlusSheetProps = {
   open: boolean;
@@ -13,8 +14,10 @@ type PlusSheetProps = {
 };
 
 export function PlusSheet({ open, onClose }: PlusSheetProps) {
-  const { role } = useBusiness();
-  const items = navForRole(PLUS_NAV, role);
+  const { role, hasActiveCashier } = useBusiness();
+  const items = navForRole(PLUS_NAV, role, hasActiveCashier).filter(
+    (item) => item.href !== "/settings/receipts" || canAccessSettingsSection(role, "receipts"),
+  );
   useEffect(() => {
     if (!open) {
       return;
@@ -56,7 +59,7 @@ export function PlusSheet({ open, onClose }: PlusSheetProps) {
       >
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <h2 id="plus-sheet-title" className="text-base font-semibold">
-            Plus
+            Menu
           </h2>
           <button
             type="button"
@@ -67,7 +70,7 @@ export function PlusSheet({ open, onClose }: PlusSheetProps) {
             <X className="size-5" aria-hidden="true" />
           </button>
         </div>
-        <nav className="flex flex-col gap-1 px-3 pb-3" aria-label="Autres pages">
+        <nav className="flex flex-col gap-1 px-3 pb-3" aria-label="Autres pages et réglages">
           {items.map((item) => {
             const Icon = item.icon;
 

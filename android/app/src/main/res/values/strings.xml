@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SamaGestion</string>
+    <string name="title_activity_main">SamaGestion</string>
+    <string name="package_name">com.samagestion.app</string>
+    <string name="custom_url_scheme">com.samagestion.app</string>
+</resources>

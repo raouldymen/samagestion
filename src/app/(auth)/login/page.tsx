@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthDivider, GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { LoginForm } from "@/components/auth/login-form";
+import { MobileAppInstall } from "@/components/mobile/mobile-app-install";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
 import { safePostAuthNext } from "@/lib/auth/paths";
@@ -49,6 +50,24 @@ export default async function LoginPage({
           Créer un compte
         </Link>
       </p>
+      <p className="mt-5 text-center text-xs leading-5 text-muted-foreground">
+        En vous connectant, vous acceptez nos{" "}
+        <Link
+          href="/conditions"
+          className="font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+        >
+          Conditions d&apos;utilisation
+        </Link>{" "}
+        et notre{" "}
+        <Link
+          href="/confidentialite"
+          className="font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+        >
+          Politique de confidentialité
+        </Link>
+        .
+      </p>
+      <MobileAppInstall />
     </Card>
   );
 }

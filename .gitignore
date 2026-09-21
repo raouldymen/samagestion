@@ -43,3 +43,9 @@ supabase/.temp/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android local build files
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties

@@ -100,7 +100,21 @@ function ymd(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export function dashboardPeriodRange(period: DashboardPeriod, now = new Date()) {
+function dashboardCustomDate(value: string | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) || ymd(date) !== value ? null : date;
+}
+
+export function dashboardPeriodRange(
+  period: DashboardPeriod,
+  now = new Date(),
+  customFrom?: string,
+  customTo?: string,
+) {
   const { year, month, day } = datePartsInDakar(now);
   const today = utcMidnight(year, month, day);
   const tomorrow = utcMidnight(year, month, day + 1);
@@ -130,6 +144,20 @@ export function dashboardPeriodRange(period: DashboardPeriod, now = new Date()) 
       from: iso(from),
       to: iso(utcMidnight(year, month + 1, 1)),
       prevFrom: iso(utcMidnight(year, month - 1, 1)),
+      prevTo: iso(from),
+    };
+  }
+
+  if (period === "custom") {
+    const from = dashboardCustomDate(customFrom) ?? today;
+    const selectedTo = dashboardCustomDate(customTo);
+    const to = selectedTo && selectedTo >= from ? new Date(selectedTo.getTime() + 86_400_000) : tomorrow;
+    const duration = to.getTime() - from.getTime();
+
+    return {
+      from: iso(from),
+      to: iso(to),
+      prevFrom: iso(new Date(from.getTime() - duration)),
       prevTo: iso(from),
     };
   }
@@ -189,7 +217,7 @@ export function weekdayLabel(isoDate: string) {
 }
 
 export function parseDashboardPeriod(value?: string): DashboardPeriod {
-  if (value === "7d" || value === "month" || value === "previous_month") {
+  if (value === "7d" || value === "month" || value === "previous_month" || value === "custom") {
     return value;
   }
 

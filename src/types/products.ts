@@ -52,6 +52,14 @@ export type ProductStats = {
   stockValue: number;
 };
 
+export type InventoryProduct = {
+  id: string;
+  name: string;
+  sku: string | null;
+  stockQuantity: number;
+  unit: ProductUnit;
+};
+
 export type ProductListFilters = {
   q?: string;
   categoryId?: string;

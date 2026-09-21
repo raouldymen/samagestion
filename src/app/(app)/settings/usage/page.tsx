@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { UsageBar } from "@/components/subscriptions/usage-bar";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { requirePermission } from "@/lib/auth/access";
+import { requireSettingsSection } from "@/lib/settings/access";
 import { usageMeters } from "@/lib/subscriptions/limits";
 import { getSubscriptionBundle } from "@/lib/subscriptions/queries";
 
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function UsageSettingsPage() {
-  await requirePermission("settings.view");
+  await requireSettingsSection("usage");
   const bundle = await getSubscriptionBundle();
   const meters = usageMeters(bundle);
   const overLimit = meters.some((meter) => meter.blocked && bundle.plan.slug === "free");

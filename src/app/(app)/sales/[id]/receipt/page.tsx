@@ -4,6 +4,7 @@ import { Receipt } from "@/components/receipts/receipt";
 import { ReceiptActions } from "@/components/receipts/receipt-actions";
 import { ReceiptFormatSwitch } from "@/components/settings/receipt-format-selector";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { requirePermission } from "@/lib/auth/access";
 import { getReceiptView } from "@/lib/receipts/queries";
 import { isReceiptFormat } from "@/lib/settings/constants";
@@ -17,7 +18,7 @@ export default async function SaleReceiptPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ format?: string }>;
+  searchParams: Promise<{ format?: string; from?: string }>;
 }) {
   await requirePermission("sales.view");
   const { id } = await params;
@@ -35,6 +36,7 @@ export default async function SaleReceiptPage({
         <PageHeader
           title={`Reçu ${receipt.saleNumber}`}
           description={receipt.status === "cancelled" ? "Cette vente a été annulée." : "Impression, PDF et partage."}
+          actions={query.from === "checkout" ? <Button href="/sales/checkout" variant="outline">Retour à la caisse</Button> : undefined}
         />
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <ReceiptFormatSwitch saleId={receipt.saleId} format={receipt.format} />

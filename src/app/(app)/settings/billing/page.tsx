@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PlanBadge } from "@/components/subscriptions/plan-badge";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { requirePermission } from "@/lib/auth/access";
+import { requireSettingsSection } from "@/lib/settings/access";
 import { statusLabel } from "@/lib/payments/payment-service";
 import {
   getSubscriptionBundle,
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default async function BillingSettingsPage() {
-  await requirePermission("settings.view");
+  await requireSettingsSection("billing");
   const [bundle, transactions] = await Promise.all([
     getSubscriptionBundle(),
     listBillingTransactions(),

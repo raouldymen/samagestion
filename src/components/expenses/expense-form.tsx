@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -83,14 +84,14 @@ export function ExpenseForm({
           ))}
         </Select>
       </div>
-      <Input
+      <DateInput
         id="expenseDate"
         name="expenseDate"
         label="Date"
-        type="date"
         required
         defaultValue={expense?.expenseDate ?? todayInDakar()}
         error={state.fieldErrors?.expenseDate}
+        showToday
       />
       <Textarea
         id="notes"
