@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { listSalesAction } from "@/lib/sales/actions";
 import { createClient } from "@/lib/supabase/client";
-import type { Customer, SaleListFilters, SaleListResult } from "@/types/sales";
+import type { SaleListFilters, SaleListResult } from "@/types/sales";
 
 function resultKey(result: SaleListResult) {
   return [
@@ -25,7 +25,6 @@ export function SellerSalesLiveList({
   initial,
   query,
   canCreate,
-  customers,
 }: {
   userId: string;
   businessId: string;
@@ -33,7 +32,6 @@ export function SellerSalesLiveList({
   initial: SaleListResult;
   query: Record<string, string | undefined>;
   canCreate: boolean;
-  customers: Customer[];
 }) {
   const [result, setResult] = useState(initial);
   const serverKey = resultKey(initial);
@@ -154,10 +152,10 @@ export function SellerSalesLiveList({
     <>
       <div className="grid gap-3 lg:hidden">
         {result.items.map((sale) => (
-          <SaleCard key={sale.id} sale={sale} customers={customers} />
+          <SaleCard key={sale.id} sale={sale} />
         ))}
       </div>
-      <SalesTable sales={result.items} customers={customers} />
+      <SalesTable sales={result.items} />
       <Pagination
         page={result.page}
         pageSize={result.pageSize}

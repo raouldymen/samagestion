@@ -292,6 +292,13 @@ export async function listCashierTodaySales(): Promise<CashierTodaySale[]> {
   });
 }
 
+export async function getMyPendingCashierSale(queueId: string): Promise<SaleListItem | null> {
+  const id = queueId.trim();
+  if (!id) return null;
+  const sales = await listMyPendingCashierSales();
+  return sales.find((sale) => sale.id === id) ?? null;
+}
+
 async function listMyPendingCashierSales(): Promise<SaleListItem[]> {
   const session = await requireBusinessSession();
   if (session.role !== "seller") return [];

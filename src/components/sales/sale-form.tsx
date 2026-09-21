@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, type FormEvent } from "react";
+import { useActionState, useEffect, useState, type FormEvent } from "react";
 import { useBusinessSession } from "@/components/providers/business-provider";
 import { CustomerPicker } from "@/components/sales/customer-picker";
 import { PaymentSection } from "@/components/sales/payment-section";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { createSaleAction } from "@/lib/sales/actions";
 import { enqueueOfflineSale } from "@/lib/offline/sales-queue";
 import { cartSubtotal, saleTotals } from "@/lib/sales/constants";
+import { clearPendingSaleDraft, readPendingSaleDraft, type PendingSaleDraft } from "@/lib/sales/pending-draft";
 import type { CartLine, Customer, PaymentMethod, SaleProductOption } from "@/types/sales";
 
 export function SaleForm({
@@ -19,16 +20,53 @@ export function SaleForm({
   products,
   requiresCashierCheckout = false,
   ownerCanChooseCheckout = false,
+  restoreDraft = false,
 }: {
   customers: Customer[];
   products: SaleProductOption[];
   requiresCashierCheckout?: boolean;
   ownerCanChooseCheckout?: boolean;
+  restoreDraft?: boolean;
+}) {
+  const [draft, setDraft] = useState<PendingSaleDraft | null | undefined>(restoreDraft ? undefined : null);
+
+  useEffect(() => {
+    if (!restoreDraft) return;
+    setDraft(readPendingSaleDraft());
+  }, [restoreDraft]);
+
+  if (restoreDraft && draft === undefined) {
+    return <p className="text-sm text-muted-foreground">Chargement de la vente...</p>;
+  }
+
+  return (
+    <SaleFormFields
+      customers={customers}
+      products={products}
+      requiresCashierCheckout={requiresCashierCheckout}
+      ownerCanChooseCheckout={ownerCanChooseCheckout}
+      draft={draft ?? undefined}
+    />
+  );
+}
+
+function SaleFormFields({
+  customers,
+  products,
+  requiresCashierCheckout = false,
+  ownerCanChooseCheckout = false,
+  draft,
+}: {
+  customers: Customer[];
+  products: SaleProductOption[];
+  requiresCashierCheckout?: boolean;
+  ownerCanChooseCheckout?: boolean;
+  draft?: PendingSaleDraft;
 }) {
   const session = useBusinessSession();
-  const [cart, setCart] = useState<CartLine[]>([]);
-  const [discount, setDiscount] = useState(0);
-  const [customerId, setCustomerId] = useState("");
+  const [cart, setCart] = useState<CartLine[]>(draft?.cart ?? []);
+  const [discount, setDiscount] = useState(draft?.discount ?? 0);
+  const [customerId, setCustomerId] = useState(draft?.customerId ?? "");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [amountPaid, setAmountPaid] = useState(0);
   const [paidTouched, setPaidTouched] = useState(false);
@@ -96,7 +134,10 @@ export function SaleForm({
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    if (navigator.onLine) return;
+    if (navigator.onLine) {
+      clearPendingSaleDraft();
+      return;
+    }
     event.preventDefault();
     if (cart.length === 0) return;
 
@@ -126,6 +167,7 @@ export function SaleForm({
 
   return (
     <form action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-5 pb-24">
+      {draft ? <input type="hidden" name="notes" value={draft.notes} /> : null}
       <input type="hidden" name="items" value={JSON.stringify(cart)} />
       <ProductSearch cart={cart} onAdd={addProduct} products={products} />
       <SaleCart
@@ -203,7 +245,7 @@ export function SaleForm({
           </div>
         ) : (
           <Button type="submit" size="lg" loading={pending} disabled={cart.length === 0} className="w-full">
-            {pending ? "Enregistrement..." : requiresCashierCheckout ? "Envoyer à la caisse" : "Valider la vente"}
+            {pending ? "Enregistrement..." : draft ? "Renvoyer à la caisse" : requiresCashierCheckout ? "Envoyer à la caisse" : "Valider la vente"}
           </Button>
         )}
       </div>

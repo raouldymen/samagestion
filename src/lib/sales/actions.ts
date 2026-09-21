@@ -145,6 +145,26 @@ export async function createSaleAction(
         : false;
     const checkoutMode = String(formData.get("checkoutMode") ?? "");
     const ownerDirectCheckout = session.role === "owner" && cashierCheckoutRequired && checkoutMode === "direct";
+    const queueId = String(formData.get("queueId") ?? "").trim();
+    if (queueId) {
+      const { error: updateError } = await supabase.rpc("update_cashier_sale", {
+        p_queue_id: queueId,
+        p_items: values.items.map((item) => ({
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+        })),
+        p_discount: values.discount,
+        p_customer_id: values.customerId,
+        p_notes: values.notes || null,
+      });
+      if (updateError) {
+        return { error: mapSaleError(updateError) };
+      }
+      revalidatePath("/sales/checkout");
+      revalidateSales();
+      redirect("/sales?updated=1");
+    }
     if (session.role !== "cashier" && (session.role === "seller" || (cashierCheckoutRequired && !ownerDirectCheckout))) {
       const { error: queueError } = await supabase.rpc("queue_sale_for_cashier", {
         p_items: values.items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),

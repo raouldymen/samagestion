@@ -4,9 +4,9 @@ import { PendingSaleActions } from "@/components/sales/pending-sale-actions";
 import { SaleStatusBadge } from "@/components/sales/sale-status-badge";
 import { paymentMethodLabel } from "@/lib/sales/constants";
 import { formatDateTime, formatFcfaAbsolute } from "@/lib/utils/format";
-import type { Customer, SaleListItem } from "@/types/sales";
+import type { SaleListItem } from "@/types/sales";
 
-export function SaleCard({ sale, customers = [] }: { sale: SaleListItem; customers?: Customer[] }) {
+export function SaleCard({ sale }: { sale: SaleListItem }) {
   const content = (
     <>
       <div className="flex items-start justify-between gap-3">
@@ -29,7 +29,7 @@ export function SaleCard({ sale, customers = [] }: { sale: SaleListItem; custome
         <div>
           {content}
           <div className="mt-3">
-            <PendingSaleActions sale={sale} customers={customers} />
+            <PendingSaleActions sale={sale} />
           </div>
         </div>
       ) : (
