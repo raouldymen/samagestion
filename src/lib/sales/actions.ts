@@ -19,6 +19,7 @@ import {
   listCashierSaleQueue,
   listCashierTodaySales,
   listOwnerSaleCollections,
+  listSales,
   searchSaleProducts,
   type CashierCheckoutSummary,
   type CashierQueuedSale,
@@ -27,7 +28,7 @@ import {
 } from "@/lib/sales/queries";
 import type { SearchSuggestion } from "@/components/ui/list-search";
 import type { AuthResult } from "@/types";
-import type { SaleProductOption } from "@/types/sales";
+import type { SaleListFilters, SaleListResult, SaleProductOption } from "@/types/sales";
 
 function revalidateSales(saleId?: string) {
   revalidatePath("/sales");
@@ -38,6 +39,10 @@ function revalidateSales(saleId?: string) {
   if (saleId) {
     revalidatePath(`/sales/${saleId}`);
   }
+}
+
+export async function listSalesAction(filters: SaleListFilters = {}): Promise<SaleListResult> {
+  return listSales(filters);
 }
 
 export async function searchSaleProductsAction(query: string): Promise<SaleProductOption[]> {

@@ -4,7 +4,7 @@ import { Banknote, Plus } from "lucide-react";
 import { Pagination } from "@/components/products/pagination";
 import { SaleCard } from "@/components/sales/sale-card";
 import { SaleFilters } from "@/components/sales/sale-filters";
-import { SellerSalesLiveRefresh } from "@/components/sales/seller-sales-live-refresh";
+import { SellerSalesLiveList } from "@/components/sales/seller-sales-live-refresh";
 import { SalesTable } from "@/components/sales/sales-table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -76,7 +76,7 @@ export default async function SalesPage({
 }) {
   const session = await requireBusinessSession();
   const params = await searchParams;
-  const result = await listSales({
+  const filters = {
     q: params.q,
     period: asPeriod(params.period),
     from: params.from,
@@ -85,11 +85,11 @@ export default async function SalesPage({
     status: asSaleStatus(params.status),
     paymentMethod: asPaymentMethod(params.paymentMethod),
     page: Number(params.page ?? "1") || 1,
-  });
+  };
+  const result = await listSales(filters);
 
   return (
     <>
-      {session.role === "seller" ? <SellerSalesLiveRefresh userId={session.user.id} /> : null}
       <div className="mb-5 flex items-center justify-between gap-3 lg:hidden">
         <h1 className="text-2xl font-semibold tracking-tight">Ventes</h1>
         <div className="flex gap-2">
@@ -129,7 +129,16 @@ export default async function SalesPage({
       </div>
       <div className="flex flex-col gap-4">
         <SaleFilters />
-        {result.items.length === 0 ? (
+        {session.role === "seller" ? (
+          <SellerSalesLiveList
+            userId={session.user.id}
+            businessId={session.businessId}
+            filters={filters}
+            initial={result}
+            query={params}
+            canCreate={can(session.role, "sales.create")}
+          />
+        ) : result.items.length === 0 ? (
           <Card className="py-10 text-center">
             <p className="font-medium">Aucune vente pour le moment.</p>
             <p className="mt-1 text-sm text-muted-foreground">
