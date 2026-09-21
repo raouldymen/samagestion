@@ -12,6 +12,7 @@ import { canCancelSaleUntil, isPaymentMethod } from "@/lib/sales/constants";
 import { sanitizeSearch } from "@/lib/products/constants";
 import { validateCustomerForm, validateSaleForm } from "@/lib/sales/validation";
 import { createClient } from "@/lib/supabase/server";
+import { getReceiptView } from "@/lib/receipts/queries";
 import {
   getCashierCheckoutSummary,
   isCashierCheckoutRequired,
@@ -303,13 +304,22 @@ export async function completeCashierSaleAction(
 
     revalidateSales(sale.id);
     revalidatePath("/sales/checkout");
-    redirect(`/sales/${sale.id}/receipt?from=checkout`);
+    return { error: null, success: true, saleId: sale.id };
   } catch (caught) {
     if (isRedirectError(caught)) {
       throw caught;
     }
     return { error: mapSubscriptionError(caught) !== "Une erreur est survenue. Veuillez réessayer." ? mapSubscriptionError(caught) : mapSaleError(caught) };
   }
+}
+
+export async function getSaleReceiptAction(saleId: string) {
+  const session = await requireBusinessSession();
+  if (!can(session.role, "sales.view") || !saleId) {
+    return null;
+  }
+
+  return getReceiptView(saleId);
 }
 
 export async function closeCashierDayAction(

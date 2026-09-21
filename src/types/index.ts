@@ -76,6 +76,7 @@ export type AuthResult = {
   fieldErrors?: FieldErrors;
   success?: boolean;
   message?: string;
+  saleId?: string;
 };
 
 export type {
