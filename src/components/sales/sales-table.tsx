@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { PendingSaleActions } from "@/components/sales/pending-sale-actions";
 import { SaleStatusBadge } from "@/components/sales/sale-status-badge";
 import { paymentMethodLabel } from "@/lib/sales/constants";
 import { formatDateTime, formatFcfaAbsolute } from "@/lib/utils/format";
-import type { SaleListItem } from "@/types/sales";
+import type { Customer, SaleListItem } from "@/types/sales";
 
-export function SalesTable({ sales }: { sales: SaleListItem[] }) {
+export function SalesTable({ sales, customers = [] }: { sales: SaleListItem[]; customers?: Customer[] }) {
   return (
     <div className="hidden overflow-x-auto rounded-xl border border-border bg-card shadow-sm lg:block">
       <table className="w-full min-w-[820px] text-left text-sm">
@@ -34,7 +35,7 @@ export function SalesTable({ sales }: { sales: SaleListItem[] }) {
               </td>
               <td className="px-4 py-3">
                 {sale.awaitingCashier ? (
-                  <span className="text-muted-foreground">À la caisse</span>
+                  <PendingSaleActions sale={sale} customers={customers} />
                 ) : (
                   <Link
                     href={`/sales/${sale.id}`}

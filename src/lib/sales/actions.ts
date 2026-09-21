@@ -351,16 +351,17 @@ export async function closeCashierDayAction(
 export async function cancelCashierSaleAction(queueId: string): Promise<AuthResult> {
   try {
     const session = await requireBusinessSession();
-    if (!can(session.role, "sales.create") || session.role === "seller") {
+    if (!can(session.role, "sales.create")) {
       return { error: "Vous n'avez pas l'autorisation d'annuler cette vente." };
     }
-    if (session.role !== "cashier" && await isCashierCheckoutRequired()) {
+    if (session.role !== "cashier" && session.role !== "seller" && await isCashierCheckoutRequired()) {
       return { error: "Un caissier actif doit gérer cette vente." };
     }
     const supabase = await createClient();
     const { error } = await supabase.rpc("cancel_cashier_sale", { p_queue_id: queueId });
     if (error) return { error: mapSaleError(error) };
     revalidatePath("/sales/checkout");
+    revalidatePath("/sales");
     return { error: null, success: true, message: "Vente annulée avant encaissement." };
   } catch (caught) {
     return { error: mapSaleError(caught) };
@@ -423,10 +424,10 @@ export async function updateCashierSaleAction(
 
   try {
     const session = await requireBusinessSession();
-    if (!can(session.role, "sales.create") || session.role === "seller") {
+    if (!can(session.role, "sales.create")) {
       return { error: "Vous n'avez pas l'autorisation de modifier cette vente." };
     }
-    if (session.role !== "cashier" && await isCashierCheckoutRequired()) {
+    if (session.role !== "cashier" && session.role !== "seller" && await isCashierCheckoutRequired()) {
       return { error: "Un caissier actif doit gérer cette vente." };
     }
 
@@ -441,6 +442,7 @@ export async function updateCashierSaleAction(
     if (error) return { error: mapSaleError(error) };
 
     revalidatePath("/sales/checkout");
+    revalidatePath("/sales");
     return { error: null, success: true, message: "Vente modifiée." };
   } catch (caught) {
     return { error: mapSaleError(caught) };

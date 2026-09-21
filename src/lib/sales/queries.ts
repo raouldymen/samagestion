@@ -89,11 +89,32 @@ type PendingCashierSaleRow = {
   id?: Json;
   customerId?: Json;
   customerName?: Json;
+  customerPhone?: Json;
+  items?: Json;
   subtotal?: Json;
   discount?: Json;
   total?: Json;
+  notes?: Json;
   createdAt?: Json;
 };
+
+function queueItems(value: Json | undefined) {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const line = item as Record<string, Json | undefined>;
+    const productId = String(line.productId ?? "");
+    if (!productId) return [];
+    return [{
+      productId,
+      name: String(line.name ?? "Produit"),
+      quantity: queueNumber(line.quantity),
+      unitPrice: queueNumber(line.unitPrice),
+      stockQuantity: queueNumber(line.stockQuantity),
+      total: queueNumber(line.total),
+    }];
+  });
+}
 
 function queueNumber(value: Json | undefined) {
   return typeof value === "number" ? value : Number(value ?? 0);
@@ -290,7 +311,7 @@ async function listMyPendingCashierSales(): Promise<SaleListItem[]> {
       businessId: session.businessId,
       customerId: row.customerId ? String(row.customerId) : null,
       customerName: row.customerName ? String(row.customerName) : null,
-      customerPhone: null,
+      customerPhone: row.customerPhone ? String(row.customerPhone) : null,
       userId: session.user.id,
       sellerName: session.user.fullName,
       saleNumber: "Vente en attente",
@@ -302,10 +323,11 @@ async function listMyPendingCashierSales(): Promise<SaleListItem[]> {
       paymentStatus: "unpaid",
       paymentMethod: null,
       status: "completed",
-      notes: null,
+      notes: row.notes ? String(row.notes) : null,
       createdAt: String(row.createdAt ?? ""),
       updatedAt: String(row.createdAt ?? ""),
       awaitingCashier: true,
+      pendingItems: queueItems(row.items),
     }];
   });
 }

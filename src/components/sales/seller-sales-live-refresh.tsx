@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { listSalesAction } from "@/lib/sales/actions";
 import { createClient } from "@/lib/supabase/client";
-import type { SaleListFilters, SaleListResult } from "@/types/sales";
+import type { Customer, SaleListFilters, SaleListResult } from "@/types/sales";
 
 function resultKey(result: SaleListResult) {
   return [
@@ -25,6 +25,7 @@ export function SellerSalesLiveList({
   initial,
   query,
   canCreate,
+  customers,
 }: {
   userId: string;
   businessId: string;
@@ -32,6 +33,7 @@ export function SellerSalesLiveList({
   initial: SaleListResult;
   query: Record<string, string | undefined>;
   canCreate: boolean;
+  customers: Customer[];
 }) {
   const [result, setResult] = useState(initial);
   const serverKey = resultKey(initial);
@@ -71,17 +73,20 @@ export function SellerSalesLiveList({
 
       setResult((current) => ({
         ...current,
-        items: current.items.map((sale) =>
-          sale.id === queueId && sale.awaitingCashier
-            ? {
-                ...sale,
-                awaitingCashier: false,
-                paymentStatus: status === "cancelled" ? sale.paymentStatus : "paid",
-                status: status === "cancelled" ? "cancelled" : "completed",
-                saleNumber: status === "cancelled" ? sale.saleNumber : sale.saleNumber === "Vente en attente" ? "Vente" : sale.saleNumber,
-              }
-            : sale,
-        ),
+        items: status === "cancelled"
+          ? current.items.filter((sale) => sale.id !== queueId)
+          : current.items.map((sale) =>
+              sale.id === queueId && sale.awaitingCashier
+                ? {
+                    ...sale,
+                    awaitingCashier: false,
+                    paymentStatus: "paid",
+                    status: "completed",
+                    saleNumber: sale.saleNumber === "Vente en attente" ? "Vente" : sale.saleNumber,
+                  }
+                : sale,
+            ),
+        total: status === "cancelled" ? Math.max(0, current.total - 1) : current.total,
       }));
       refresh();
     };
@@ -149,10 +154,10 @@ export function SellerSalesLiveList({
     <>
       <div className="grid gap-3 lg:hidden">
         {result.items.map((sale) => (
-          <SaleCard key={sale.id} sale={sale} />
+          <SaleCard key={sale.id} sale={sale} customers={customers} />
         ))}
       </div>
-      <SalesTable sales={result.items} />
+      <SalesTable sales={result.items} customers={customers} />
       <Pagination
         page={result.page}
         pageSize={result.pageSize}

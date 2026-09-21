@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { PendingSaleActions } from "@/components/sales/pending-sale-actions";
 import { SaleStatusBadge } from "@/components/sales/sale-status-badge";
 import { paymentMethodLabel } from "@/lib/sales/constants";
 import { formatDateTime, formatFcfaAbsolute } from "@/lib/utils/format";
-import type { SaleListItem } from "@/types/sales";
+import type { Customer, SaleListItem } from "@/types/sales";
 
-export function SaleCard({ sale }: { sale: SaleListItem }) {
+export function SaleCard({ sale, customers = [] }: { sale: SaleListItem; customers?: Customer[] }) {
   const content = (
     <>
       <div className="flex items-start justify-between gap-3">
@@ -24,7 +25,16 @@ export function SaleCard({ sale }: { sale: SaleListItem }) {
 
   return (
     <Card className="p-4">
-      {sale.awaitingCashier ? <div>{content}</div> : <Link href={`/sales/${sale.id}`} className="block">{content}</Link>}
+      {sale.awaitingCashier ? (
+        <div>
+          {content}
+          <div className="mt-3">
+            <PendingSaleActions sale={sale} customers={customers} />
+          </div>
+        </div>
+      ) : (
+        <Link href={`/sales/${sale.id}`} className="block">{content}</Link>
+      )}
     </Card>
   );
 }

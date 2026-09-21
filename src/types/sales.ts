@@ -53,9 +53,19 @@ export type Sale = {
   items: SaleItem[];
 };
 
+export type PendingSaleItem = {
+  productId: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  stockQuantity: number;
+  total: number;
+};
+
 export type SaleListItem = Omit<Sale, "items"> & {
   awaitingCashier?: boolean;
   isReturned?: boolean;
+  pendingItems?: PendingSaleItem[];
 };
 
 export type CartLine = {

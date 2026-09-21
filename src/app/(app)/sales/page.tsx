@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { can } from "@/lib/auth/permissions";
 import { requireBusinessSession } from "@/lib/auth/session";
-import { listSales } from "@/lib/sales/queries";
+import { listCustomers, listSales } from "@/lib/sales/queries";
 import type { PaymentMethod, PaymentStatus, SaleStatus } from "@/types/sales";
 
 export const metadata: Metadata = {
@@ -86,7 +86,10 @@ export default async function SalesPage({
     paymentMethod: asPaymentMethod(params.paymentMethod),
     page: Number(params.page ?? "1") || 1,
   };
-  const result = await listSales(filters);
+  const [result, customers] = await Promise.all([
+    listSales(filters),
+    session.role === "seller" ? listCustomers() : Promise.resolve([]),
+  ]);
 
   return (
     <>
@@ -137,6 +140,7 @@ export default async function SalesPage({
             initial={result}
             query={params}
             canCreate={can(session.role, "sales.create")}
+            customers={customers}
           />
         ) : result.items.length === 0 ? (
           <Card className="py-10 text-center">
