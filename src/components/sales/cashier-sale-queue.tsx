@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
+import { useActionState, useMemo, useState, useTransition } from "react";
 import { CustomerPicker } from "@/components/sales/customer-picker";
 import { Dialog } from "@/components/ui/dialog";
 import { cancelCashierSaleAction, completeCashierSaleAction, markOwnerSaleCollectionAction, updateCashierSaleAction } from "@/lib/sales/actions";
@@ -35,7 +35,20 @@ export function CashierSaleQueue({
   closure: CashierClosureSummary | null;
 }) {
   const live = useCashierCheckoutLiveData(businessId, { sales, summary, ownerCollections, todaySales });
-  const [receiptSaleId, setReceiptSaleId] = useState<string | null>(null);
+  const [receiptSaleId, setReceiptSaleId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.sessionStorage.getItem("cashier-open-receipt");
+  });
+
+  function openReceipt(saleId: string) {
+    window.sessionStorage.setItem("cashier-open-receipt", saleId);
+    setReceiptSaleId(saleId);
+  }
+
+  function closeReceipt() {
+    window.sessionStorage.removeItem("cashier-open-receipt");
+    setReceiptSaleId(null);
+  }
   const methodTotals = Object.entries(live.summary.byMethod).filter(([, total]) => total > 0);
 
   const recap = (
@@ -85,7 +98,7 @@ export function CashierSaleQueue({
           <p className="mt-1 text-sm text-muted-foreground">Les ventes envoyées par les vendeurs apparaîtront ici tout de suite.</p>
         </Card>
       ) : (
-        live.sales.map((sale) => <CashierSaleCard key={sale.id} sale={sale} customers={customers} onCompleted={setReceiptSaleId} />)
+        live.sales.map((sale) => <CashierSaleCard key={sale.id} sale={sale} customers={customers} onCompleted={openReceipt} />)
       )}
     </div>
   );
@@ -115,7 +128,7 @@ export function CashierSaleQueue({
       {ownerCollectionsPanel}
       {queuedSalesPanel}
       {todaySalesPanel}
-      <CashierCompletedReceipt saleId={receiptSaleId} onClose={() => setReceiptSaleId(null)} />
+      <CashierCompletedReceipt saleId={receiptSaleId} onClose={closeReceipt} />
     </div>
   );
 }
@@ -150,14 +163,14 @@ function OwnerSaleCollectionRow({ collection }: { collection: OwnerSaleCollectio
 
 function CashierSaleCard({ sale, customers, onCompleted }: { sale: CashierQueuedSale; customers: Customer[]; onCompleted: (saleId: string) => void }) {
   const [amountPaid, setAmountPaid] = useState(sale.subtotal - sale.discount);
-  const [state, action, pending] = useActionState(completeCashierSaleAction, { error: null });
-  const total = sale.subtotal - sale.discount;
-
-  useEffect(() => {
-    if (state.saleId) {
-      onCompleted(state.saleId);
+  const [state, action, pending] = useActionState(async (previous: { error: string | null; saleId?: string }, formData: FormData) => {
+    const result = await completeCashierSaleAction(previous, formData);
+    if (result.saleId) {
+      onCompleted(result.saleId);
     }
-  }, [onCompleted, state.saleId]);
+    return result;
+  }, { error: null });
+  const total = sale.subtotal - sale.discount;
   const router = useRouter();
   const [cancelling, startCancel] = useTransition();
   const [cancelError, setCancelError] = useState<string | null>(null);
