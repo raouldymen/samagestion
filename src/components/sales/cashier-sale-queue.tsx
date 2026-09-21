@@ -108,13 +108,18 @@ export function CashierSaleQueue({
       <p className="text-sm font-semibold">Ventes du jour</p>
       <div className="mt-2 divide-y divide-border">
         {live.todaySales.slice(0, 10).map((sale) => (
-          <div key={sale.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+          <button
+            key={sale.id}
+            type="button"
+            onClick={() => openReceipt(sale.id)}
+            className="flex w-full items-center justify-between gap-3 py-2 text-left text-sm hover:bg-muted/60"
+          >
             <div className="min-w-0">
               <p className="font-medium">{sale.saleNumber} · {sale.sellerName}</p>
               <p className="text-xs text-muted-foreground">{sale.paymentStatus === "paid" ? "Payée" : sale.paymentStatus === "partial" ? "Partiellement payée" : "Impayée"}</p>
             </div>
             <span className="shrink-0 font-semibold">{formatFcfaAbsolute(sale.amountPaid)}</span>
-          </div>
+          </button>
         ))}
       </div>
       {live.todaySales.length > 10 ? <p className="mt-2 text-xs text-muted-foreground">Les 10 dernières ventes sont affichées.</p> : null}
