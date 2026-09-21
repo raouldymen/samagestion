@@ -1214,6 +1214,10 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: Json;
       };
+      get_cashier_sale_receipt: {
+        Args: { p_sale_id: string };
+        Returns: Json;
+      };
       mark_owner_sale_collection: {
         Args: { p_collection_id: string };
         Returns: undefined;

@@ -609,6 +609,57 @@ export async function listSales(filters: SaleListFilters = {}): Promise<SaleList
   };
 }
 
+async function getCashierSaleReceipt(saleId: string): Promise<Sale | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_cashier_sale_receipt", { p_sale_id: saleId });
+  if (error || !data || typeof data !== "object" || Array.isArray(data)) {
+    return null;
+  }
+
+  const row = data as Record<string, Json | undefined>;
+  const id = String(row.id ?? "");
+  if (!id) return null;
+
+  const rawItems = Array.isArray(row.items) ? row.items : [];
+  return {
+    id,
+    businessId: String(row.businessId ?? ""),
+    customerId: row.customerId ? String(row.customerId) : null,
+    customerName: row.customerName ? String(row.customerName) : null,
+    customerPhone: row.customerPhone ? String(row.customerPhone) : null,
+    userId: String(row.userId ?? ""),
+    sellerName: String(row.sellerName ?? "Membre"),
+    saleNumber: String(row.saleNumber ?? "Vente"),
+    subtotal: queueNumber(row.subtotal),
+    discount: queueNumber(row.discount),
+    total: queueNumber(row.total),
+    amountPaid: queueNumber(row.amountPaid),
+    amountDue: queueNumber(row.amountDue),
+    paymentStatus: asPaymentStatus(row.paymentStatus ? String(row.paymentStatus) : null),
+    paymentMethod: asPaymentMethod(row.paymentMethod ? String(row.paymentMethod) : null),
+    status: asSaleStatus(row.status ? String(row.status) : null),
+    notes: row.notes ? String(row.notes) : null,
+    createdAt: String(row.createdAt ?? ""),
+    updatedAt: String(row.updatedAt ?? ""),
+    items: rawItems.flatMap((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+      const line = item as Record<string, Json | undefined>;
+      return [mapItem({
+        id: String(line.id ?? ""),
+        sale_id: String(line.saleId ?? id),
+        product_id: String(line.productId ?? ""),
+        product_name: String(line.productName ?? "Produit"),
+        quantity: queueNumber(line.quantity),
+        unit_price: queueNumber(line.unitPrice),
+        purchase_price: queueNumber(line.purchasePrice),
+        discount: queueNumber(line.discount),
+        total: queueNumber(line.total),
+        created_at: String(line.createdAt ?? ""),
+      })];
+    }),
+  };
+}
+
 export async function getSale(saleId: string): Promise<Sale | null> {
   const session = await requireBusinessSession();
   const supabase = await createClient();
@@ -628,6 +679,9 @@ export async function getSale(saleId: string): Promise<Sale | null> {
   const { data, error } = await saleQuery.maybeSingle();
 
   if (error || !data) {
+    if (session.role === "cashier") {
+      return getCashierSaleReceipt(saleId);
+    }
     return null;
   }
 
