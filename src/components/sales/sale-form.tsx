@@ -194,11 +194,10 @@ function SaleFormFields({
       />
       <CustomerPicker customers={customers} value={customerId} onChange={setCustomerId} />
       {requiresCashierCheckout ? (
-        <div className="rounded-lg border border-primary/20 bg-primary-soft p-4 text-sm text-primary">
-          Cette vente sera envoyée à la caisse. Le caissier, le propriétaire ou le manager choisira le paiement et validera l&apos;encaissement.
+        <>
           <input type="hidden" name="paymentMethod" value="cash" />
           <input type="hidden" name="amountPaid" value="0" />
-        </div>
+        </>
       ) : (
         <>
           <PaymentSection
