@@ -18,10 +18,18 @@ export function ExpenseForm({
   mode,
   expense,
   categories,
+  redirectTo,
+  cancelHref = "/expenses",
+  submitLabel,
+  compact = false,
 }: {
   mode: "create" | "edit";
   expense?: Expense;
   categories: ExpenseCategory[];
+  redirectTo?: string;
+  cancelHref?: string | null;
+  submitLabel?: string;
+  compact?: boolean;
 }) {
   const action = mode === "create" ? createExpenseAction : updateExpenseAction;
   const [state, formAction, pending] = useActionState(action, { error: null });
@@ -31,6 +39,7 @@ export function ExpenseForm({
       {mode === "edit" && expense ? (
         <input type="hidden" name="expenseId" value={expense.id} />
       ) : null}
+      {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
       <Input
         id="description"
         name="description"
@@ -84,23 +93,29 @@ export function ExpenseForm({
           ))}
         </Select>
       </div>
-      <DateInput
-        id="expenseDate"
-        name="expenseDate"
-        label="Date"
-        required
-        defaultValue={expense?.expenseDate ?? todayInDakar()}
-        error={state.fieldErrors?.expenseDate}
-        showToday
-      />
-      <Textarea
-        id="notes"
-        name="notes"
-        label="Note"
-        defaultValue={expense?.notes ?? ""}
-        placeholder="Détail optionnel..."
-        error={state.fieldErrors?.notes}
-      />
+      {compact ? (
+        <input type="hidden" name="expenseDate" value={expense?.expenseDate ?? todayInDakar()} />
+      ) : (
+        <DateInput
+          id="expenseDate"
+          name="expenseDate"
+          label="Date"
+          required
+          defaultValue={expense?.expenseDate ?? todayInDakar()}
+          error={state.fieldErrors?.expenseDate}
+          showToday
+        />
+      )}
+      {compact ? null : (
+        <Textarea
+          id="notes"
+          name="notes"
+          label="Note"
+          defaultValue={expense?.notes ?? ""}
+          placeholder="Détail optionnel..."
+          error={state.fieldErrors?.notes}
+        />
+      )}
       {state.error ? (
         <p role="alert" className="text-sm text-danger">
           {state.error}
@@ -108,11 +123,13 @@ export function ExpenseForm({
       ) : null}
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button type="submit" loading={pending}>
-          {mode === "create" ? "Enregistrer la dépense" : "Enregistrer les modifications"}
+          {submitLabel ?? (mode === "create" ? "Enregistrer la dépense" : "Enregistrer les modifications")}
         </Button>
-        <Button href="/expenses" variant="outline">
-          Annuler
-        </Button>
+        {cancelHref ? (
+          <Button href={cancelHref} variant="outline">
+            Annuler
+          </Button>
+        ) : null}
       </div>
     </form>
   );

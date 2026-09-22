@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { expenseRedirectPath } from "./redirect";
 import { validateExpenseForm } from "./validation";
 
 describe("validation des dépenses", () => {
@@ -49,5 +50,16 @@ describe("validation des dépenses", () => {
     const result = validateExpenseForm(form, "create");
     assert.equal(result.error, null);
     assert.equal(result.values.amount, 15000);
+  });
+});
+
+describe("redirection après une dépense", () => {
+  it("reste à la caisse si demandé", () => {
+    assert.equal(expenseRedirectPath("/sales/checkout"), "/sales/checkout");
+  });
+
+  it("refuse une destination externe", () => {
+    assert.equal(expenseRedirectPath("https://exemple.test"), "/expenses");
+    assert.equal(expenseRedirectPath("/admin"), "/expenses");
   });
 });

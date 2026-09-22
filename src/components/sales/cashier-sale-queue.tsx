@@ -13,7 +13,7 @@ import { CashierClosureCard } from "@/components/sales/cashier-closure-card";
 import { CashierCompletedReceipt } from "@/components/sales/cashier-completed-receipt";
 import { useCashierCheckoutLiveData } from "@/components/sales/cashier-collections-live-refresh";
 import { useRouter } from "next/navigation";
-import type { CashierCheckoutSummary, CashierClosureSummary, CashierQueuedSale, CashierTodaySale, OwnerSaleCollection } from "@/lib/sales/queries";
+import type { CashierCheckoutSummary, CashierClosureSummary, CashierExpenseSummary, CashierQueuedSale, CashierTodaySale, OwnerSaleCollection } from "@/lib/sales/queries";
 
 export function CashierSaleQueue({
   businessId,
@@ -21,6 +21,7 @@ export function CashierSaleQueue({
   summary,
   ownerCollections,
   todaySales,
+  expenses,
   closure,
 }: {
   businessId: string;
@@ -28,9 +29,10 @@ export function CashierSaleQueue({
   summary: CashierCheckoutSummary;
   ownerCollections: OwnerSaleCollection[];
   todaySales: CashierTodaySale[];
+  expenses: CashierExpenseSummary;
   closure: CashierClosureSummary | null;
 }) {
-  const live = useCashierCheckoutLiveData(businessId, { sales, summary, ownerCollections, todaySales });
+  const live = useCashierCheckoutLiveData(businessId, { sales, summary, ownerCollections, todaySales, expenses, closure });
   const [receiptSaleId, setReceiptSaleId] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return window.sessionStorage.getItem("cashier-open-receipt");
@@ -57,6 +59,11 @@ export function CashierSaleQueue({
           {methodTotals.map(([method, total]) => <span key={method}>{PAYMENT_METHODS.find((item) => item.value === method)?.label ?? "Autre"} : {formatFcfaAbsolute(total)}</span>)}
         </div>
       ) : null}
+      {live.expenses.total > 0 ? (
+        <p className="mt-2 text-sm text-primary">
+          Dépenses : {formatFcfaAbsolute(live.expenses.total)}
+        </p>
+      ) : null}
       {live.summary.sales.length ? (
         <div className="mt-4 border-t border-primary/15 pt-3 text-sm text-primary">
           <p className="mb-1 font-medium">Derniers encaissements</p>
@@ -64,6 +71,17 @@ export function CashierSaleQueue({
             <div key={sale.id} className="flex justify-between gap-3 py-1">
               <span>{sale.saleNumber} · {PAYMENT_METHODS.find((item) => item.value === sale.paymentMethod)?.label ?? "Autre"}</span>
               <span className="font-medium">{formatFcfaAbsolute(sale.amountPaid)}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {live.expenses.items.length ? (
+        <div className="mt-3 border-t border-primary/15 pt-3 text-sm text-primary">
+          <p className="mb-1 font-medium">Dépenses du jour</p>
+          {live.expenses.items.slice(0, 5).map((expense) => (
+            <div key={expense.id} className="flex justify-between gap-3 py-1">
+              <span className="min-w-0 truncate">{expense.description} · {PAYMENT_METHODS.find((item) => item.value === expense.paymentMethod)?.label ?? "Autre"}</span>
+              <span className="shrink-0 font-medium">− {formatFcfaAbsolute(expense.amount)}</span>
             </div>
           ))}
         </div>
@@ -125,7 +143,7 @@ export function CashierSaleQueue({
   return (
     <div className="grid gap-4">
       {recap}
-      {closure ? <CashierClosureCard summary={closure} /> : null}
+      {live.closure ? <CashierClosureCard summary={live.closure} /> : null}
       {ownerCollectionsPanel}
       {queuedSalesPanel}
       {todaySalesPanel}

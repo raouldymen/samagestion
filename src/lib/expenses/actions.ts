@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { can } from "@/lib/auth/permissions";
 import { requireBusinessSession } from "@/lib/auth/session";
 import { mapExpenseError } from "@/lib/expenses/errors";
+import { expenseRedirectPath } from "@/lib/expenses/redirect";
 import { validateExpenseCategoryForm, validateExpenseForm } from "@/lib/expenses/validation";
 import { isRedirectError } from "@/lib/products/errors";
 import { createClient } from "@/lib/supabase/server";
@@ -16,8 +17,10 @@ function revalidateExpenses(expenseId?: string) {
   revalidatePath("/expenses");
   revalidatePath("/expenses/new");
   revalidatePath("/dashboard");
+  revalidatePath("/sales/checkout");
 
   if (expenseId) {
+    revalidatePath(`/expenses/${expenseId}`);
     revalidatePath(`/expenses/${expenseId}/edit`);
   }
 }
@@ -71,7 +74,7 @@ export async function createExpenseAction(
     }
 
     revalidateExpenses(expense.id);
-    redirect("/expenses");
+    redirect(expenseRedirectPath(formData.get("redirectTo")));
   } catch (caught) {
     if (isRedirectError(caught)) {
       throw caught;

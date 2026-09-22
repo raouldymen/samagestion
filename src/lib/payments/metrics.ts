@@ -6,10 +6,24 @@ export type AdminPlanSlug = "free" | "pro" | "business";
 export type AdminSubscriptionRow = {
   businessId: string;
   businessName: string;
+  businessEmail: string | null;
   plan: AdminPlanSlug;
   planName: string;
   status: string;
   periodEnd: string | null;
+  trialEnd: string | null;
+};
+
+export type AdminPaymentRow = {
+  id: string;
+  businessId: string;
+  businessName: string;
+  amount: number;
+  currency: string;
+  status: string;
+  provider: string;
+  createdAt: string;
+  planName: string | null;
 };
 
 export type RevenueSnapshot = {

@@ -1742,6 +1742,23 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: Json;
       };
+      admin_set_business_plan: {
+        Args: {
+          p_business_id: string;
+          p_plan_slug: string;
+          p_period_days?: number;
+          p_admin_user_id?: string | null;
+        };
+        Returns: Json;
+      };
+      admin_extend_business_trial: {
+        Args: {
+          p_business_id: string;
+          p_extra_days?: number;
+          p_admin_user_id?: string | null;
+        };
+        Returns: Json;
+      };
       has_plan_feature: {
         Args: { p_feature: string; p_business_id?: string | null };
         Returns: boolean;

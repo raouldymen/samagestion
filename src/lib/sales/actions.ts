@@ -15,6 +15,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getReceiptView } from "@/lib/receipts/queries";
 import {
   getCashierCheckoutSummary,
+  getCashierClosureSummary,
+  getCashierExpenseSummary,
   isCashierCheckoutRequired,
   listCashierSaleQueue,
   listCashierTodaySales,
@@ -22,6 +24,8 @@ import {
   listSales,
   searchSaleProducts,
   type CashierCheckoutSummary,
+  type CashierClosureSummary,
+  type CashierExpenseSummary,
   type CashierQueuedSale,
   type CashierTodaySale,
   type OwnerSaleCollection,
@@ -292,15 +296,20 @@ export async function getCashierCheckoutLiveDataAction(): Promise<{
   summary: CashierCheckoutSummary;
   ownerCollections: OwnerSaleCollection[];
   todaySales: CashierTodaySale[];
+  expenses: CashierExpenseSummary;
+  closure: CashierClosureSummary | null;
 }> {
-  const [sales, summary, ownerCollections, todaySales] = await Promise.all([
+  const session = await requireBusinessSession();
+  const [sales, summary, ownerCollections, todaySales, expenses, closure] = await Promise.all([
     listCashierSaleQueue(),
     getCashierCheckoutSummary(),
     listOwnerSaleCollections(),
     listCashierTodaySales(),
+    getCashierExpenseSummary(),
+    getCashierClosureSummary(),
   ]);
 
-  return { sales, summary, ownerCollections, todaySales };
+  return { sales, summary, ownerCollections, todaySales, expenses, closure: session.role === "cashier" ? closure : null };
 }
 
 export async function completeCashierSaleAction(

@@ -27,10 +27,12 @@ function asSubscriptions(value: Json | undefined): AdminSubscriptionRow[] {
     return [{
       businessId,
       businessName: String(row.businessName ?? "Commerce"),
+      businessEmail: row.businessEmail ? String(row.businessEmail) : null,
       plan: asPlan(row.plan),
       planName: String(row.planName ?? "Gratuit"),
       status: String(row.status ?? "active"),
       periodEnd: row.periodEnd ? String(row.periodEnd) : null,
+      trialEnd: row.trialEnd ? String(row.trialEnd) : null,
     }];
   });
 }

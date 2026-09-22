@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getCashierCheckoutLiveDataAction } from "@/lib/sales/actions";
 import { createClient } from "@/lib/supabase/client";
-import type { CashierCheckoutSummary, CashierQueuedSale, CashierTodaySale, OwnerSaleCollection } from "@/lib/sales/queries";
+import type { CashierCheckoutSummary, CashierClosureSummary, CashierExpenseSummary, CashierQueuedSale, CashierTodaySale, OwnerSaleCollection } from "@/lib/sales/queries";
 
 export type CashierCheckoutLiveData = {
   sales: CashierQueuedSale[];
   summary: CashierCheckoutSummary;
   ownerCollections: OwnerSaleCollection[];
   todaySales: CashierTodaySale[];
+  expenses: CashierExpenseSummary;
+  closure: CashierClosureSummary | null;
 };
 
 function snapshotKey(data: CashierCheckoutLiveData) {
@@ -19,6 +21,10 @@ function snapshotKey(data: CashierCheckoutLiveData) {
     data.ownerCollections.map((collection) => collection.id).join(","),
     data.summary.count,
     data.summary.total,
+    data.expenses.total,
+    data.expenses.items.map((expense) => `${expense.id}:${expense.amount}`).join(","),
+    data.closure?.cashExpenses ?? "",
+    data.closure?.expectedAmount ?? "",
   ].join("|");
 }
 
@@ -64,6 +70,11 @@ export function useCashierCheckoutLiveData(businessId: string, initial: CashierC
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "sales", filter: `business_id=eq.${businessId}` },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "expenses", filter: `business_id=eq.${businessId}` },
         refresh,
       )
       .subscribe((status) => {
