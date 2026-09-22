@@ -89,11 +89,14 @@ export default async function ExpensesPage({
     <>
       <div className="mb-5 flex items-center justify-between gap-3 lg:hidden">
         <h1 className="text-2xl font-semibold tracking-tight">Dépenses</h1>
-        {canCreate ? (
-          <Button href="/expenses/new" size="icon" aria-label="Ajouter une dépense">
-            <Plus className="size-5" aria-hidden="true" />
-          </Button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {canCreate || canManage ? <ExpenseCategoryManager categories={categories} canManage={canManage} /> : null}
+          {canCreate ? (
+            <Button href="/expenses/new" size="icon" aria-label="Ajouter une dépense">
+              <Plus className="size-5" aria-hidden="true" />
+            </Button>
+          ) : null}
+        </div>
       </div>
       <div className="hidden lg:block">
         <PageHeader
@@ -101,7 +104,7 @@ export default async function ExpensesPage({
           description="Suivez les dépenses de votre activité."
           actions={
             <>
-              {canManage ? <ExpenseCategoryManager categories={categories} /> : null}
+              {canCreate || canManage ? <ExpenseCategoryManager categories={categories} canManage={canManage} /> : null}
               {canCreate ? (
                 <Button href="/expenses/new">
                   <Plus className="size-4" aria-hidden="true" />

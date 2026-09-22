@@ -10,7 +10,13 @@ import {
 } from "@/lib/expenses/actions";
 import type { ExpenseCategory } from "@/types/expenses";
 
-export function ExpenseCategoryManager({ categories }: { categories: ExpenseCategory[] }) {
+export function ExpenseCategoryManager({
+  categories,
+  canManage = true,
+}: {
+  categories: ExpenseCategory[];
+  canManage?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ExpenseCategory | null>(null);
   const [createState, createAction, createPending] = useActionState(createExpenseCategoryAction, {
@@ -40,14 +46,16 @@ export function ExpenseCategoryManager({ categories }: { categories: ExpenseCate
             categories.map((category) => (
               <li key={category.id} className="flex items-center justify-between gap-3 py-2">
                 <p className="truncate text-sm font-medium">{category.name}</p>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(category)}>
-                  Modifier
-                </Button>
+                {canManage ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(category)}>
+                    Modifier
+                  </Button>
+                ) : null}
               </li>
             ))
           )}
         </ul>
-        {editing ? (
+        {canManage && editing ? (
           <form key={editing.id} action={updateAction} className="flex flex-col gap-3">
             <input type="hidden" name="categoryId" value={editing.id} />
             <Input
@@ -72,7 +80,7 @@ export function ExpenseCategoryManager({ categories }: { categories: ExpenseCate
               </Button>
             </div>
           </form>
-        ) : (
+        ) : canManage ? (
           <form
             key={createState.message ?? "new-expense-category"}
             action={createAction}
@@ -95,6 +103,8 @@ export function ExpenseCategoryManager({ categories }: { categories: ExpenseCate
               Ajouter
             </Button>
           </form>
+        ) : (
+          <p className="text-sm text-muted-foreground">Choisissez une de ces catégories en enregistrant une dépense.</p>
         )}
       </Dialog>
     </>
