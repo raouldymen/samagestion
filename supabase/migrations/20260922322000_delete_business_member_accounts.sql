@@ -1,6 +1,8 @@
 -- Après suppression d'un commerce, retirer les comptes (et e-mails)
 -- des membres qui n'appartiennent plus à aucune autre boutique.
 
+drop function if exists public.delete_own_business();
+
 create or replace function public.delete_own_business()
 returns jsonb
 language plpgsql
