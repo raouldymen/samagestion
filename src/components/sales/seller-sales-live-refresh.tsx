@@ -154,7 +154,7 @@ export function SellerSalesLiveList({
 
   return (
     <>
-      <div className="grid gap-3 lg:hidden">
+      <div className="grid gap-2 lg:hidden">
         {result.items.map((sale) => (
           <SaleCard key={sale.id} sale={sale} canManagePending={canManagePending} />
         ))}
