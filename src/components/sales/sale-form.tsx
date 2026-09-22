@@ -247,7 +247,7 @@ function SaleFormFields({
           </div>
         ) : (
           <Button type="submit" size="lg" loading={pending} disabled={cart.length === 0} className="w-full">
-            {pending ? "Enregistrement..." : draft ? "Renvoyer à la caisse" : requiresCashierCheckout ? "Envoyer à la caisse" : "Valider la vente"}
+            {pending ? "Enregistrement..." : requiresCashierCheckout ? (draft ? "Renvoyer à la caisse" : "Envoyer à la caisse") : "Valider la vente"}
           </Button>
         )}
       </div>

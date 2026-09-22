@@ -147,7 +147,8 @@ export async function createSaleAction(
     const ownerDirectCheckout = session.role === "owner" && cashierCheckoutRequired && checkoutMode === "direct";
     const pendingEdit = String(formData.get("pendingEdit") ?? "") === "1";
     const sellerId = String(formData.get("sellerId") ?? "").trim();
-    if (pendingEdit || (session.role !== "cashier" && (session.role === "seller" || (cashierCheckoutRequired && !ownerDirectCheckout)))) {
+    const shouldQueueOnly = session.role !== "cashier" && (session.role === "seller" || (cashierCheckoutRequired && !ownerDirectCheckout));
+    if (shouldQueueOnly) {
       const { error: queueError } = await supabase.rpc("queue_sale_for_cashier", {
         p_items: values.items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
         p_discount: values.discount,
@@ -162,7 +163,37 @@ export async function createSaleAction(
 
       revalidatePath("/sales/checkout");
       revalidateSales();
-      redirect(session.role === "seller" ? "/sales?queued=1" : "/sales/checkout");
+      redirect("/sales?queued=1");
+    }
+
+    if (pendingEdit && session.role === "cashier") {
+      const { data: queued, error: queueError } = await supabase.rpc("queue_sale_for_cashier", {
+        p_items: values.items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
+        p_discount: values.discount,
+        p_customer_id: values.customerId,
+        p_notes: values.notes || null,
+        p_seller_id: sellerId || null,
+      });
+      if (queueError) {
+        return { error: mapSaleError(queueError) };
+      }
+      const queuedRow = queued && typeof queued === "object" && !Array.isArray(queued) ? queued as { id?: string } : null;
+      const queueId = String(queuedRow?.id ?? "").trim();
+      if (!queueId) {
+        return { error: mapSaleError(new Error("SALE_NOT_FOUND")) };
+      }
+      const { data: completed, error: completeError } = await supabase.rpc("complete_cashier_sale", {
+        p_queue_id: queueId,
+        p_payment_method: values.paymentMethod,
+        p_amount_paid: values.amountPaid,
+      });
+      const sale = Array.isArray(completed) ? completed[0] : completed;
+      if (completeError || !sale?.id) {
+        return { error: mapSaleError(completeError ?? new Error("SALE_NOT_FOUND")) };
+      }
+      revalidatePath("/sales/checkout");
+      revalidateSales(sale.id);
+      redirect(`/sales/${sale.id}/receipt?from=checkout`);
     }
 
     await assertLimit("sales_monthly");

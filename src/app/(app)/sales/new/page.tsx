@@ -31,7 +31,7 @@ export default async function NewSalePage({
     listSaleProductOptions(),
   ]);
   const ownerCanChooseCheckout = session.role === "owner" && cashierCheckoutRequired && !editing;
-  const requiresCashierCheckout = Boolean(editing) || (session.role !== "cashier" && !ownerCanChooseCheckout && (session.role === "seller" || cashierCheckoutRequired));
+  const requiresCashierCheckout = session.role !== "cashier" && !ownerCanChooseCheckout && (session.role === "seller" || cashierCheckoutRequired);
 
   return (
     <>
@@ -39,7 +39,9 @@ export default async function NewSalePage({
         title={editing ? "Modifier la vente" : "Nouvelle vente"}
         description={
           editing
-            ? "Corrigez les produits, puis renvoyez la vente à la caisse."
+            ? session.role === "cashier"
+              ? "Corrigez les produits, puis encaissez."
+              : "Corrigez les produits, puis renvoyez la vente à la caisse."
             : requiresCashierCheckout
               ? "Ajoutez les produits puis envoyez la vente à la caisse."
               : ownerCanChooseCheckout
