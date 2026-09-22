@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MemberActions } from "@/components/team/member-actions";
+import { MemberPresenceBadge } from "@/components/team/team-presence";
 import { MemberStatusBadge } from "@/components/team/member-status-badge";
 import { Card } from "@/components/ui/card";
 import { ROLE_LABELS } from "@/lib/team/labels";
@@ -19,6 +20,7 @@ export function TeamMemberCard({ member }: { member: TeamMember }) {
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <MemberStatusBadge status={member.status} />
+        <MemberPresenceBadge userId={member.userId} />
       </div>
       <p className="mt-3 text-sm text-muted-foreground">{member.email}</p>
       <Link

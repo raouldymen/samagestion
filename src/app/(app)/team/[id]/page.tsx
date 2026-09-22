@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MemberActions } from "@/components/team/member-actions";
+import { MemberPresenceBadge } from "@/components/team/team-presence";
 import { MemberStatusBadge } from "@/components/team/member-status-badge";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -45,6 +46,12 @@ export default async function TeamMemberPage({
             <dt className="text-muted-foreground">Statut</dt>
             <dd className="mt-1">
               <MemberStatusBadge status={member.status} />
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Connexion</dt>
+            <dd className="mt-1">
+              <MemberPresenceBadge userId={member.userId} />
             </dd>
           </div>
           <div>
