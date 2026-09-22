@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { NotificationsProvider } from "@/components/notifications/notifications-provider";
+import { BusinessLiveSync } from "@/components/providers/business-live-sync";
 import { BusinessProvider } from "@/components/providers/business-provider";
 import { TeamPresenceProvider } from "@/components/team/team-presence";
 import { requireBusinessSession } from "@/lib/auth/session";
@@ -24,6 +25,7 @@ export async function AuthenticatedShell({
   return (
     <BusinessProvider value={{ ...session, hasActiveCashier }}>
       <TeamPresenceProvider>
+        <BusinessLiveSync />
         <NotificationsProvider unreadCount={unreadCount} latest={latest}>
           <AppShell>{children}</AppShell>
         </NotificationsProvider>
