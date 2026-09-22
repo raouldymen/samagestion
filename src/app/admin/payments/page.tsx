@@ -28,8 +28,7 @@ export default async function AdminPaymentsPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
-      <p className="text-sm font-medium text-primary">Administration plateforme</p>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight">Paiements et abonnements</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Paiements et abonnements</h1>
       <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {metrics.map(([label, value]) => (
           <article key={label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
