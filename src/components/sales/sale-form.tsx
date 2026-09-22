@@ -168,6 +168,8 @@ function SaleFormFields({
   return (
     <form action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-5 pb-24">
       {draft ? <input type="hidden" name="notes" value={draft.notes} /> : null}
+      {draft ? <input type="hidden" name="pendingEdit" value="1" /> : null}
+      {draft?.sellerId ? <input type="hidden" name="sellerId" value={draft.sellerId} /> : null}
       <input type="hidden" name="items" value={JSON.stringify(cart)} />
       <ProductSearch cart={cart} onAdd={addProduct} products={products} />
       <SaleCart

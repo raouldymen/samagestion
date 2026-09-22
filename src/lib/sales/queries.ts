@@ -17,6 +17,7 @@ import type {
 
 export type CashierQueuedSale = {
   id: string;
+  sellerId: string | null;
   sellerName: string;
   customerId: string | null;
   customerName: string | null;
@@ -138,6 +139,7 @@ export async function listCashierSaleQueue(): Promise<CashierQueuedSale[]> {
     const rawItems = Array.isArray(row.items) ? row.items : [];
     return [{
       id: String(row.id ?? ""),
+      sellerId: row.sellerId ? String(row.sellerId) : null,
       sellerName: String(row.sellerName ?? "Vendeur"),
       customerId: row.customerId ? String(row.customerId) : null,
       customerName: row.customerName ? String(row.customerName) : null,

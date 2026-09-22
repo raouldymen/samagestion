@@ -4,28 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cancelCashierSaleAction } from "@/lib/sales/actions";
-import { savePendingSaleDraft } from "@/lib/sales/pending-draft";
+import { draftFromQueuedSale, savePendingSaleDraft } from "@/lib/sales/pending-draft";
 import type { SaleListItem } from "@/types/sales";
 
 export function PendingSaleActions({ sale }: { sale: SaleListItem }) {
   const router = useRouter();
   const [busy, startBusy] = useTransition();
   const [error, setError] = useState<string | null>(null);
-
-  function persistDraft() {
-    savePendingSaleDraft({
-      cart: (sale.pendingItems ?? []).map((item) => ({
-        productId: item.productId,
-        name: item.name,
-        unitPrice: item.unitPrice,
-        stockQuantity: item.stockQuantity,
-        quantity: item.quantity,
-      })),
-      discount: sale.discount,
-      customerId: sale.customerId ?? "",
-      notes: sale.notes ?? "",
-    });
-  }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -35,7 +20,13 @@ export function PendingSaleActions({ sale }: { sale: SaleListItem }) {
         variant="outline"
         loading={busy}
         onClick={() => startBusy(async () => {
-          persistDraft();
+          savePendingSaleDraft(draftFromQueuedSale({
+            items: sale.pendingItems ?? [],
+            discount: sale.discount,
+            customerId: sale.customerId,
+            notes: sale.notes,
+            sellerId: sale.userId,
+          }));
           const result = await cancelCashierSaleAction(sale.id);
           if (result.error) {
             setError(result.error);

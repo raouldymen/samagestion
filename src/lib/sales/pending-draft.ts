@@ -5,6 +5,7 @@ export type PendingSaleDraft = {
   discount: number;
   customerId: string;
   notes: string;
+  sellerId?: string;
 };
 
 const KEY = "pending-sale-draft";
@@ -38,6 +39,7 @@ export function readPendingSaleDraft(): PendingSaleDraft | null {
       discount: Number(value.discount) || 0,
       customerId: String(value.customerId ?? ""),
       notes: String(value.notes ?? ""),
+      sellerId: value.sellerId ? String(value.sellerId) : undefined,
     };
   } catch {
     return null;
@@ -46,4 +48,26 @@ export function readPendingSaleDraft(): PendingSaleDraft | null {
 
 export function clearPendingSaleDraft() {
   window.sessionStorage.removeItem(KEY);
+}
+
+export function draftFromQueuedSale(sale: {
+  customerId?: string | null;
+  discount: number;
+  notes?: string | null;
+  sellerId?: string | null;
+  items: Array<{ productId: string; name: string; unitPrice: number; stockQuantity: number; quantity: number }>;
+}): PendingSaleDraft {
+  return {
+    cart: sale.items.map((item) => ({
+      productId: item.productId,
+      name: item.name,
+      unitPrice: item.unitPrice,
+      stockQuantity: item.stockQuantity,
+      quantity: item.quantity,
+    })),
+    discount: sale.discount,
+    customerId: sale.customerId ?? "",
+    notes: sale.notes ?? "",
+    sellerId: sale.sellerId ?? undefined,
+  };
 }

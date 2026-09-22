@@ -1228,6 +1228,7 @@ export type Database = {
           p_discount?: number;
           p_customer_id?: string | null;
           p_notes?: string | null;
+          p_seller_id?: string | null;
         };
         Returns: Json;
       };

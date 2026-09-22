@@ -1,9 +1,8 @@
 "use client";
 
-import { useActionState, useMemo, useState, useTransition } from "react";
-import { CustomerPicker } from "@/components/sales/customer-picker";
-import { Dialog } from "@/components/ui/dialog";
-import { cancelCashierSaleAction, completeCashierSaleAction, markOwnerSaleCollectionAction, updateCashierSaleAction } from "@/lib/sales/actions";
+import { useActionState, useState, useTransition } from "react";
+import { cancelCashierSaleAction, completeCashierSaleAction, markOwnerSaleCollectionAction } from "@/lib/sales/actions";
+import { draftFromQueuedSale, savePendingSaleDraft } from "@/lib/sales/pending-draft";
 import { PAYMENT_METHODS } from "@/lib/sales/constants";
 import { formatDateTime, formatFcfaAbsolute } from "@/lib/utils/format";
 import { Button } from "@/components/ui/button";
@@ -15,13 +14,11 @@ import { CashierCompletedReceipt } from "@/components/sales/cashier-completed-re
 import { useCashierCheckoutLiveData } from "@/components/sales/cashier-collections-live-refresh";
 import { useRouter } from "next/navigation";
 import type { CashierCheckoutSummary, CashierClosureSummary, CashierQueuedSale, CashierTodaySale, OwnerSaleCollection } from "@/lib/sales/queries";
-import type { Customer } from "@/types/sales";
 
 export function CashierSaleQueue({
   businessId,
   sales,
   summary,
-  customers,
   ownerCollections,
   todaySales,
   closure,
@@ -29,7 +26,6 @@ export function CashierSaleQueue({
   businessId: string;
   sales: CashierQueuedSale[];
   summary: CashierCheckoutSummary;
-  customers: Customer[];
   ownerCollections: OwnerSaleCollection[];
   todaySales: CashierTodaySale[];
   closure: CashierClosureSummary | null;
@@ -98,7 +94,7 @@ export function CashierSaleQueue({
           <p className="mt-1 text-sm text-muted-foreground">Les ventes envoyées par les vendeurs apparaîtront ici tout de suite.</p>
         </Card>
       ) : (
-        live.sales.map((sale) => <CashierSaleCard key={sale.id} sale={sale} customers={customers} onCompleted={openReceipt} />)
+        live.sales.map((sale) => <CashierSaleCard key={sale.id} sale={sale} onCompleted={openReceipt} />)
       )}
     </div>
   );
@@ -166,7 +162,7 @@ function OwnerSaleCollectionRow({ collection }: { collection: OwnerSaleCollectio
   );
 }
 
-function CashierSaleCard({ sale, customers, onCompleted }: { sale: CashierQueuedSale; customers: Customer[]; onCompleted: (saleId: string) => void }) {
+function CashierSaleCard({ sale, onCompleted }: { sale: CashierQueuedSale; onCompleted: (saleId: string) => void }) {
   const [amountPaid, setAmountPaid] = useState(sale.subtotal - sale.discount);
   const [state, action, pending] = useActionState(async (previous: { error: string | null; saleId?: string }, formData: FormData) => {
     const result = await completeCashierSaleAction(previous, formData);
@@ -177,21 +173,8 @@ function CashierSaleCard({ sale, customers, onCompleted }: { sale: CashierQueued
   }, { error: null });
   const total = sale.subtotal - sale.discount;
   const router = useRouter();
-  const [cancelling, startCancel] = useTransition();
-  const [cancelError, setCancelError] = useState<string | null>(null);
-  const [editOpen, setEditOpen] = useState(false);
-  const [editItems, setEditItems] = useState(sale.items);
-  const [customerId, setCustomerId] = useState(sale.customerId ?? "");
-  const [editing, startEdit] = useTransition();
-  const [editError, setEditError] = useState<string | null>(null);
-  const editedTotal = useMemo(
-    () => Math.max(0, editItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) - sale.discount),
-    [editItems, sale.discount],
-  );
-
-  function updateItem(productId: string, field: "quantity" | "unitPrice", value: number) {
-    setEditItems((items) => items.map((item) => item.productId === productId ? { ...item, [field]: value } : item));
-  }
+  const [busy, startBusy] = useTransition();
+  const [actionError, setActionError] = useState<string | null>(null);
 
   return (
     <Card className="p-4">
@@ -231,14 +214,35 @@ function CashierSaleCard({ sale, customers, onCompleted }: { sale: CashierQueued
         />
         {state.error ? <p className="text-sm text-danger sm:col-span-2" role="alert">{state.error}</p> : null}
         <div className="flex flex-wrap justify-end gap-2 sm:col-span-2">
-          <Button type="button" variant="outline" onClick={() => setEditOpen(true)}>Modifier</Button>
+          <Button
+            type="button"
+            variant="outline"
+            loading={busy}
+            onClick={() => startBusy(async () => {
+              savePendingSaleDraft(draftFromQueuedSale({
+                items: sale.items,
+                discount: sale.discount,
+                customerId: sale.customerId,
+                notes: sale.notes,
+                sellerId: sale.sellerId,
+              }));
+              const result = await cancelCashierSaleAction(sale.id);
+              if (result.error) {
+                setActionError(result.error);
+                return;
+              }
+              router.push("/sales/new?edit=1");
+            })}
+          >
+            Modifier
+          </Button>
           <Button
             type="button"
             variant="danger"
-            loading={cancelling}
-            onClick={() => startCancel(async () => {
+            loading={busy}
+            onClick={() => startBusy(async () => {
               const result = await cancelCashierSaleAction(sale.id);
-              if (result.error) setCancelError(result.error);
+              if (result.error) setActionError(result.error);
               else router.refresh();
             })}
           >
@@ -247,67 +251,7 @@ function CashierSaleCard({ sale, customers, onCompleted }: { sale: CashierQueued
           <Button type="submit" loading={pending}>Valider</Button>
         </div>
       </form>
-      {cancelError ? <p className="mt-2 text-sm text-danger" role="alert">{cancelError}</p> : null}
-      <Dialog open={editOpen} title="Modifier la vente" onClose={() => setEditOpen(false)}>
-        <form
-          className="flex max-h-[70dvh] flex-col gap-4 overflow-y-auto pr-1"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const formData = new FormData(event.currentTarget);
-            startEdit(async () => {
-              const result = await updateCashierSaleAction({ error: null }, formData);
-              if (result.error) {
-                setEditError(result.error);
-                return;
-              }
-              setEditError(null);
-              setEditOpen(false);
-              router.refresh();
-            });
-          }}
-        >
-          <input type="hidden" name="queueId" value={sale.id} />
-          <input type="hidden" name="discount" value={sale.discount} />
-          <input type="hidden" name="notes" value={sale.notes ?? ""} />
-          <input type="hidden" name="items" value={JSON.stringify(editItems)} />
-          <div className="flex flex-col gap-3">
-            <p className="text-sm font-medium">Produits</p>
-            {editItems.map((item) => (
-              <div key={item.productId} className="rounded-lg border border-border p-3">
-                <p className="mb-3 text-sm font-medium">{item.name}</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    id={`quantity-${sale.id}-${item.productId}`}
-                    label="Quantité"
-                    type="number"
-                    inputMode="decimal"
-                    min={1}
-                    max={item.stockQuantity}
-                    step="1"
-                    value={item.quantity}
-                    onChange={(event) => updateItem(item.productId, "quantity", Number(event.target.value) || 0)}
-                  />
-                  <Input
-                    id={`price-${sale.id}-${item.productId}`}
-                    label="Prix unitaire"
-                    type="number"
-                    inputMode="decimal"
-                    min={0.01}
-                    step="0.01"
-                    value={item.unitPrice}
-                    onChange={(event) => updateItem(item.productId, "unitPrice", Number(event.target.value) || 0)}
-                  />
-                </div>
-                <p className="mt-2 text-right text-sm font-medium">{formatFcfaAbsolute(item.quantity * item.unitPrice)}</p>
-              </div>
-            ))}
-          </div>
-          <CustomerPicker customers={customers} value={customerId} onChange={setCustomerId} />
-          <p className="text-right text-sm font-semibold">Nouveau total : {formatFcfaAbsolute(editedTotal)}</p>
-          {editError ? <p className="text-sm text-danger" role="alert">{editError}</p> : null}
-          <Button type="submit" loading={editing}>Enregistrer les modifications</Button>
-        </form>
-      </Dialog>
+      {actionError ? <p className="mt-2 text-sm text-danger" role="alert">{actionError}</p> : null}
     </Card>
   );
 }

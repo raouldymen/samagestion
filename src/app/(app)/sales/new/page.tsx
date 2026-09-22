@@ -31,7 +31,7 @@ export default async function NewSalePage({
     listSaleProductOptions(),
   ]);
   const ownerCanChooseCheckout = session.role === "owner" && cashierCheckoutRequired && !editing;
-  const requiresCashierCheckout = session.role !== "cashier" && !ownerCanChooseCheckout && (session.role === "seller" || cashierCheckoutRequired || editing);
+  const requiresCashierCheckout = Boolean(editing) || (session.role !== "cashier" && !ownerCanChooseCheckout && (session.role === "seller" || cashierCheckoutRequired));
 
   return (
     <>
