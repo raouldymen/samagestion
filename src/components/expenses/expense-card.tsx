@@ -4,7 +4,7 @@ import { paymentMethodLabel } from "@/lib/sales/constants";
 import { formatCalendarDate, formatFcfaAbsolute } from "@/lib/utils/format";
 import type { Expense } from "@/types/expenses";
 
-export function ExpenseCard({ expense, canManage }: { expense: Expense; canManage: boolean }) {
+export function ExpenseCard({ expense }: { expense: Expense }) {
   const content = (
     <>
       <div className="flex items-start justify-between gap-3">
@@ -28,15 +28,11 @@ export function ExpenseCard({ expense, canManage }: { expense: Expense; canManag
     </>
   );
 
-  if (canManage && expense.status === "active") {
-    return (
-      <Card className="p-4">
-        <Link href={`/expenses/${expense.id}/edit`} className="block">
-          {content}
-        </Link>
-      </Card>
-    );
-  }
-
-  return <Card className="p-4">{content}</Card>;
+  return (
+    <Card className="p-4">
+      <Link href={`/expenses/${expense.id}`} className="block">
+        {content}
+      </Link>
+    </Card>
+  );
 }

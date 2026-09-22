@@ -41,16 +41,20 @@ export function ExpensesTable({
               <td className="px-4 py-3">{paymentMethodLabel(expense.paymentMethod)}</td>
               <td className="px-4 py-3">{expense.creatorName}</td>
               <td className="px-4 py-3">
+                <Link
+                  href={`/expenses/${expense.id}`}
+                  className="font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Voir
+                </Link>
                 {canManage && expense.status === "active" ? (
                   <Link
                     href={`/expenses/${expense.id}/edit`}
-                    className="font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="ml-3 font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     Modifier
                   </Link>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
+                ) : null}
               </td>
             </tr>
           ))}

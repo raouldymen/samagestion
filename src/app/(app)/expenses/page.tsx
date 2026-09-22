@@ -134,7 +134,7 @@ export default async function ExpensesPage({
           <>
             <div className="grid gap-3 lg:hidden">
               {result.items.map((expense) => (
-                <ExpenseCard key={expense.id} expense={expense} canManage={canManage} />
+                <ExpenseCard key={expense.id} expense={expense} />
               ))}
             </div>
             <ExpensesTable expenses={result.items} canManage={canManage} />
