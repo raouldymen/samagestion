@@ -6,7 +6,7 @@ import { paymentMethodLabel } from "@/lib/sales/constants";
 import { formatDateTime, formatFcfaAbsolute } from "@/lib/utils/format";
 import type { SaleListItem } from "@/types/sales";
 
-export function SaleCard({ sale }: { sale: SaleListItem }) {
+export function SaleCard({ sale, canManagePending = false }: { sale: SaleListItem; canManagePending?: boolean }) {
   const content = (
     <>
       <div className="flex items-start justify-between gap-3">
@@ -28,9 +28,11 @@ export function SaleCard({ sale }: { sale: SaleListItem }) {
       {sale.awaitingCashier ? (
         <div>
           {content}
-          <div className="mt-3">
-            <PendingSaleActions sale={sale} />
-          </div>
+          {canManagePending ? (
+            <div className="mt-3">
+              <PendingSaleActions sale={sale} />
+            </div>
+          ) : null}
         </div>
       ) : (
         <Link href={`/sales/${sale.id}`} className="block">{content}</Link>

@@ -129,7 +129,7 @@ export default async function SalesPage({
       </div>
       <div className="flex flex-col gap-4">
         <SaleFilters />
-        {session.role === "seller" ? (
+        {session.role === "seller" || session.role === "owner" || session.role === "manager" ? (
           <SellerSalesLiveList
             userId={session.user.id}
             businessId={session.businessId}
@@ -137,6 +137,8 @@ export default async function SalesPage({
             initial={result}
             query={params}
             canCreate={can(session.role, "sales.create")}
+            ownOnly={session.role === "seller"}
+            canManagePending={session.role === "seller"}
           />
         ) : result.items.length === 0 ? (
           <Card className="py-10 text-center">

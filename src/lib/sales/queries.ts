@@ -88,6 +88,8 @@ export type CashierDailyClosure = {
 
 type PendingCashierSaleRow = {
   id?: Json;
+  sellerId?: Json;
+  sellerName?: Json;
   customerId?: Json;
   customerName?: Json;
   customerPhone?: Json;
@@ -303,7 +305,7 @@ export async function getMyPendingCashierSale(queueId: string): Promise<SaleList
 
 async function listMyPendingCashierSales(): Promise<SaleListItem[]> {
   const session = await requireBusinessSession();
-  if (session.role !== "seller") return [];
+  if (session.role !== "seller" && session.role !== "owner" && session.role !== "manager") return [];
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("list_my_pending_cashier_sales");
@@ -321,8 +323,8 @@ async function listMyPendingCashierSales(): Promise<SaleListItem[]> {
       customerId: row.customerId ? String(row.customerId) : null,
       customerName: row.customerName ? String(row.customerName) : null,
       customerPhone: row.customerPhone ? String(row.customerPhone) : null,
-      userId: session.user.id,
-      sellerName: session.user.fullName,
+      userId: row.sellerId ? String(row.sellerId) : session.user.id,
+      sellerName: row.sellerName ? String(row.sellerName) : session.user.fullName,
       saleNumber: "Vente en attente",
       subtotal: queueNumber(row.subtotal),
       discount: queueNumber(row.discount),
@@ -519,7 +521,7 @@ export async function listSales(filters: SaleListFilters = {}): Promise<SaleList
   const search = sanitizeSearch(filters.q ?? "");
   const period = filters.period ?? "month";
   const range = periodRange(period, filters.from, filters.to);
-  const canShowPending = session.role === "seller"
+  const canShowPending = (session.role === "seller" || session.role === "owner" || session.role === "manager")
     && (filters.status === undefined || filters.status === "all" || filters.status === "pending")
     && (!filters.paymentStatus || filters.paymentStatus === "all")
     && (!filters.paymentMethod || filters.paymentMethod === "all");

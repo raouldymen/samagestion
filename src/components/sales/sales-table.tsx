@@ -5,7 +5,7 @@ import { paymentMethodLabel } from "@/lib/sales/constants";
 import { formatDateTime, formatFcfaAbsolute } from "@/lib/utils/format";
 import type { SaleListItem } from "@/types/sales";
 
-export function SalesTable({ sales }: { sales: SaleListItem[] }) {
+export function SalesTable({ sales, canManagePending = false }: { sales: SaleListItem[]; canManagePending?: boolean }) {
   return (
     <div className="hidden overflow-x-auto rounded-xl border border-border bg-card shadow-sm lg:block">
       <table className="w-full min-w-[820px] text-left text-sm">
@@ -29,13 +29,13 @@ export function SalesTable({ sales }: { sales: SaleListItem[] }) {
               <td className="px-4 py-3">{sale.customerName ?? "—"}</td>
               <td className="px-4 py-3">{sale.sellerName}</td>
               <td className={`px-4 py-3 ${sale.isReturned ? "line-through text-muted-foreground" : ""}`}>{formatFcfaAbsolute(sale.total)}</td>
-              <td className="px-4 py-3">{paymentMethodLabel(sale.paymentMethod)}</td>
+              <td className="px-4 py-3">{sale.awaitingCashier ? "À la caisse" : paymentMethodLabel(sale.paymentMethod)}</td>
               <td className="px-4 py-3">
                 <SaleStatusBadge paymentStatus={sale.paymentStatus} status={sale.status} awaitingCashier={sale.awaitingCashier} isReturned={sale.isReturned} />
               </td>
               <td className="px-4 py-3">
                 {sale.awaitingCashier ? (
-                  <PendingSaleActions sale={sale} />
+                  canManagePending ? <PendingSaleActions sale={sale} /> : <span className="text-muted-foreground">À la caisse</span>
                 ) : (
                   <Link
                     href={`/sales/${sale.id}`}

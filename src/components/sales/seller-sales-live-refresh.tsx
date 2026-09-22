@@ -25,6 +25,8 @@ export function SellerSalesLiveList({
   initial,
   query,
   canCreate,
+  ownOnly = true,
+  canManagePending = false,
 }: {
   userId: string;
   businessId: string;
@@ -32,6 +34,8 @@ export function SellerSalesLiveList({
   initial: SaleListResult;
   query: Record<string, string | undefined>;
   canCreate: boolean;
+  ownOnly?: boolean;
+  canManagePending?: boolean;
 }) {
   const [result, setResult] = useState(initial);
   const serverKey = resultKey(initial);
@@ -64,7 +68,7 @@ export function SellerSalesLiveList({
       const queueId = String(next.id ?? previous.id ?? "");
       const status = String(next.status ?? "");
       const sellerId = String(next.seller_id ?? previous.seller_id ?? "");
-      if (!queueId || sellerId !== userId || (status !== "completed" && status !== "cancelled")) {
+      if (!queueId || (ownOnly && sellerId !== userId) || (status !== "completed" && status !== "cancelled")) {
         refresh();
         return;
       }
@@ -101,7 +105,7 @@ export function SellerSalesLiveList({
         { event: "*", schema: "public", table: "cashier_sale_queue", filter: `business_id=eq.${businessId}` },
         (payload) => {
           const row = (payload.new ?? payload.old) as { seller_id?: string };
-          if (row.seller_id === userId) markQueuePaid(payload as { new: Record<string, unknown>; old: Record<string, unknown> });
+          if (!ownOnly || row.seller_id === userId) markQueuePaid(payload as { new: Record<string, unknown>; old: Record<string, unknown> });
         },
       )
       .on(
@@ -130,7 +134,7 @@ export function SellerSalesLiveList({
       window.removeEventListener("online", refresh);
       void supabase.removeChannel(channel);
     };
-  }, [businessId, pull, userId]);
+  }, [businessId, ownOnly, pull, userId]);
 
   if (result.items.length === 0) {
     return (
@@ -152,10 +156,10 @@ export function SellerSalesLiveList({
     <>
       <div className="grid gap-3 lg:hidden">
         {result.items.map((sale) => (
-          <SaleCard key={sale.id} sale={sale} />
+          <SaleCard key={sale.id} sale={sale} canManagePending={canManagePending} />
         ))}
       </div>
-      <SalesTable sales={result.items} />
+      <SalesTable sales={result.items} canManagePending={canManagePending} />
       <Pagination
         page={result.page}
         pageSize={result.pageSize}
