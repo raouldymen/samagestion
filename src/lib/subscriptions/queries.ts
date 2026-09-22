@@ -38,7 +38,7 @@ const FALLBACK_PLANS: SubscriptionPlan[] = [
     name: "Pro",
     slug: "pro",
     description: "Pour les commerces en croissance.",
-    priceMonthly: 5000,
+    priceMonthly: 2500,
     currency: "XOF",
     sortOrder: 2,
     features: {
@@ -58,7 +58,7 @@ const FALLBACK_PLANS: SubscriptionPlan[] = [
     name: "Business",
     slug: "business",
     description: "Pour les équipes et l'audit avancé.",
-    priceMonthly: 10000,
+    priceMonthly: 5000,
     currency: "XOF",
     sortOrder: 3,
     features: {
