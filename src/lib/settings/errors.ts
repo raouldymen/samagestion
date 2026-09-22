@@ -25,6 +25,10 @@ export function mapSettingsError(error: unknown): string {
     return "Vous n'avez pas la permission de modifier ces paramètres.";
   }
 
+  if (message.includes("business_delete_failed")) {
+    return "Le commerce n'a pas pu être supprimé. Réessayez.";
+  }
+
   if (message.includes("not_authenticated") || message.includes("no_business")) {
     return "Votre session a expiré. Veuillez vous reconnecter.";
   }

@@ -15,7 +15,7 @@ import {
   logoStoragePath,
   sanitizeDocumentPrefix,
 } from "@/lib/settings/constants";
-import { validateBusinessProfile, validateReceiptSettingsForm } from "@/lib/settings/validation";
+import { validateBusinessProfile, validateDeleteBusinessForm, validateReceiptSettingsForm } from "@/lib/settings/validation";
 import { hasPermission } from "@/lib/auth/permissions";
 import type { ReceiptView } from "@/types/receipts";
 import type { BusinessSettings } from "@/types/settings";
@@ -159,6 +159,19 @@ describe("reçus", () => {
     assert.equal(previewB.businessName, "Boutique B");
     assert.notEqual(previewA.settings.legalInformation, undefined);
     assert.notEqual(settingsFor("biz-a", "A").logoPath, settingsFor("biz-b", "B").logoPath);
+  });
+});
+
+describe("suppression du commerce", () => {
+  it("exige le mot de passe du propriétaire", () => {
+    const empty = validateDeleteBusinessForm(new FormData());
+    assert.ok(empty.fieldErrors.password);
+
+    const form = new FormData();
+    form.set("password", "secret123");
+    const ok = validateDeleteBusinessForm(form);
+    assert.equal(ok.error, null);
+    assert.equal(ok.values.password, "secret123");
   });
 });
 

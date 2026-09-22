@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/access";
 import { requireBusinessSession, requireUser } from "@/lib/auth/session";
 import { isRedirectError } from "@/lib/products/errors";
@@ -12,6 +13,7 @@ import {
 import { mapSettingsError } from "@/lib/settings/errors";
 import {
   validateBusinessProfile,
+  validateDeleteBusinessForm,
   validatePasswordChange,
   validatePreferencesForm,
   validateReceiptSettingsForm,
@@ -254,6 +256,66 @@ export async function updatePasswordAction(
     }
 
     return { error: null, success: true, message: "Mot de passe mis à jour." };
+  } catch (caught) {
+    if (isRedirectError(caught)) {
+      throw caught;
+    }
+
+    return { error: mapSettingsError(caught) };
+  }
+}
+
+export async function deleteBusinessAction(
+  _prev: AuthResult,
+  formData: FormData,
+): Promise<AuthResult> {
+  const { values, fieldErrors, error } = validateDeleteBusinessForm(formData);
+
+  if (error) {
+    return { error, fieldErrors };
+  }
+
+  try {
+    const user = await requireUser();
+    const session = await requireBusinessSession();
+
+    if (session.role !== "owner" || (session.business.ownerId && session.business.ownerId !== session.user.id)) {
+      return { error: "Seul le propriétaire peut supprimer le commerce." };
+    }
+
+    if (!user.email) {
+      return { error: "Impossible de vérifier le mot de passe. Définissez-en un dans Sécurité." };
+    }
+
+    const identities = user.identities ?? [];
+    const hasPassword = identities.length === 0 || identities.some((identity) => identity.provider === "email");
+    if (!hasPassword) {
+      return { error: "Définissez un mot de passe dans Sécurité avant de supprimer le commerce." };
+    }
+
+    const supabase = await createClient();
+    const { error: verificationError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: values.password,
+    });
+
+    if (verificationError) {
+      return { error: "Le mot de passe est incorrect.", fieldErrors: { password: "Le mot de passe est incorrect." } };
+    }
+
+    const logoPath = logoStoragePath(session.business.logoUrl);
+    const { error: rpcError } = await supabase.rpc("delete_own_business");
+
+    if (rpcError) {
+      return { error: mapSettingsError(rpcError) };
+    }
+
+    if (logoPath) {
+      await supabase.storage.from(BUSINESS_LOGO_BUCKET).remove([logoPath]);
+    }
+
+    revalidateSettings();
+    redirect("/onboarding");
   } catch (caught) {
     if (isRedirectError(caught)) {
       throw caught;

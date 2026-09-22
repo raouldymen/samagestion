@@ -1631,6 +1631,10 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["businesses"]["Row"];
       };
+      delete_own_business: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
       set_business_logo: {
         Args: { p_logo_url: string | null };
         Returns: Database["public"]["Tables"]["businesses"]["Row"];

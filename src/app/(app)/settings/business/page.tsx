@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BusinessSettings } from "@/components/settings/business-settings";
+import { DeleteBusinessCard } from "@/components/settings/delete-business-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireSettingsSection } from "@/lib/settings/access";
 import { hasPermission } from "@/lib/auth/permissions";
@@ -19,7 +20,10 @@ export default async function BusinessSettingsPage() {
         title="Commerce"
         description="Informations affichées dans l'application et sur les reçus."
       />
-      <BusinessSettings settings={settings} canEdit={hasPermission(session.role, "settings.edit")} />
+      <div className="grid gap-6">
+        <BusinessSettings settings={settings} canEdit={hasPermission(session.role, "settings.edit")} />
+        {session.role === "owner" ? <DeleteBusinessCard businessName={settings.name} /> : null}
+      </div>
     </>
   );
 }

@@ -121,3 +121,18 @@ export function validatePasswordChange(formData: FormData) {
     error: Object.keys(fieldErrors).length ? "Veuillez corriger les champs indiqués." : null,
   };
 }
+
+export function validateDeleteBusinessForm(formData: FormData) {
+  const password = readString(formData, "password");
+  const fieldErrors: FieldErrors = {};
+
+  if (!password) {
+    fieldErrors.password = "Saisissez votre mot de passe pour confirmer.";
+  }
+
+  return {
+    values: { password },
+    fieldErrors,
+    error: Object.keys(fieldErrors).length ? "Veuillez corriger les champs indiqués." : null,
+  };
+}
