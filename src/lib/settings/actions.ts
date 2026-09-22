@@ -287,12 +287,6 @@ export async function deleteBusinessAction(
       return { error: "Impossible de vérifier le mot de passe. Définissez-en un dans Sécurité." };
     }
 
-    const identities = user.identities ?? [];
-    const hasPassword = identities.length === 0 || identities.some((identity) => identity.provider === "email");
-    if (!hasPassword) {
-      return { error: "Définissez un mot de passe dans Sécurité avant de supprimer le commerce." };
-    }
-
     const supabase = await createClient();
     const { error: verificationError } = await supabase.auth.signInWithPassword({
       email: user.email,

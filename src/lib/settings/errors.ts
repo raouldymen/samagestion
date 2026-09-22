@@ -25,7 +25,12 @@ export function mapSettingsError(error: unknown): string {
     return "Vous n'avez pas la permission de modifier ces paramètres.";
   }
 
-  if (message.includes("business_delete_failed")) {
+  if (
+    message.includes("business_delete_failed") ||
+    message.includes("owner_protected") ||
+    message.includes("foreign key") ||
+    message.includes("violates")
+  ) {
     return "Le commerce n'a pas pu être supprimé. Réessayez.";
   }
 

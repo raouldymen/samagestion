@@ -37,7 +37,7 @@ export function DeleteBusinessCard({ businessName }: { businessName: string }) {
             required
             error={state.fieldErrors?.password}
           />
-          {state.error && !state.fieldErrors?.password ? (
+          {state.error ? (
             <p role="alert" className="text-sm text-danger">
               {state.error}
             </p>
