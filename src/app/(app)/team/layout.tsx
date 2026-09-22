@@ -15,7 +15,7 @@ export default async function TeamLayout({
     return (
       <UpgradeCard
         title="Fonctionnalité Pro"
-        description="La gestion d'équipe est disponible à partir du plan Pro. Invitez jusqu'à 5 collaborateurs et contrôlez leurs accès."
+        description="La gestion d'équipe est disponible à partir du plan Pro. Invitez jusqu'à 10 collaborateurs et contrôlez leurs accès."
         ctaHref="/upgrade?feature=team_management"
         ctaLabel="Passer à Pro"
       />

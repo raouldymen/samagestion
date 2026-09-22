@@ -22,9 +22,9 @@ import { getPaymentProvider } from "@/lib/payments/payment-provider";
 import type { PlanFeatureConfig, SubscriptionBundle } from "@/types/subscriptions";
 
 const FREE_FEATURES: Record<string, PlanFeatureConfig> = {
-  products: { enabled: true, limit: 100 },
-  sales_monthly: { enabled: true, limit: 100 },
-  customers: { enabled: true, limit: 100 },
+  products: { enabled: true, limit: 300 },
+  sales_monthly: { enabled: true, limit: 300 },
+  customers: { enabled: true, limit: 300 },
   team_members: { enabled: true, limit: 1 },
   exports: { enabled: false, limit: null },
   financial_reports: { enabled: false, limit: null },
@@ -34,10 +34,10 @@ const FREE_FEATURES: Record<string, PlanFeatureConfig> = {
 };
 
 const PRO_FEATURES: Record<string, PlanFeatureConfig> = {
-  products: { enabled: true, limit: 1000 },
+  products: { enabled: true, limit: 5000 },
   sales_monthly: { enabled: true, limit: null },
   customers: { enabled: true, limit: null },
-  team_members: { enabled: true, limit: 5 },
+  team_members: { enabled: true, limit: 10 },
   exports: { enabled: true, limit: null },
   financial_reports: { enabled: true, limit: null },
   team_management: { enabled: true, limit: null },
@@ -137,17 +137,17 @@ describe("sémantique limites (NULL / 0 / N)", () => {
 });
 
 describe("limites Free", () => {
-  it("refuse le 101e produit", () => {
-    const atLimit = checkPlanLimit(FREE_FEATURES, "products", 100);
+  it("refuse le 301e produit", () => {
+    const atLimit = checkPlanLimit(FREE_FEATURES, "products", 300);
     assert.equal(atLimit.allowed, false);
-    assert.equal(atLimit.limit, 100);
+    assert.equal(atLimit.limit, 300);
 
-    const under = checkPlanLimit(FREE_FEATURES, "products", 99);
+    const under = checkPlanLimit(FREE_FEATURES, "products", 299);
     assert.equal(under.allowed, true);
   });
 
-  it("refuse la 101e vente mensuelle", () => {
-    assert.equal(checkPlanLimit(FREE_FEATURES, "sales_monthly", 100).allowed, false);
+  it("refuse la 301e vente mensuelle", () => {
+    assert.equal(checkPlanLimit(FREE_FEATURES, "sales_monthly", 300).allowed, false);
     assert.equal(checkPlanLimit(FREE_FEATURES, "sales_monthly", 84).allowed, true);
   });
 
@@ -165,10 +165,10 @@ describe("limites Free", () => {
 });
 
 describe("limites Pro / Business", () => {
-  it("passe la limite produits à 1000 sur Pro", () => {
-    assert.equal(getPlanLimit(PRO_FEATURES, "products"), 1000);
+  it("passe la limite produits à 5000 sur Pro", () => {
+    assert.equal(getPlanLimit(PRO_FEATURES, "products"), 5000);
     assert.equal(checkPlanLimit(PRO_FEATURES, "products", 800).allowed, true);
-    assert.equal(checkPlanLimit(PRO_FEATURES, "products", 1000).allowed, false);
+    assert.equal(checkPlanLimit(PRO_FEATURES, "products", 5000).allowed, false);
   });
 
   it("autorise ventes/clients illimités sur Pro", () => {
@@ -176,7 +176,7 @@ describe("limites Pro / Business", () => {
     assert.equal(checkPlanLimit(PRO_FEATURES, "sales_monthly", 50_000).allowed, true);
     assert.equal(hasFeature(PRO_FEATURES, "financial_reports"), true);
     assert.equal(hasFeature(PRO_FEATURES, "exports"), true);
-    assert.equal(getPlanLimit(PRO_FEATURES, "team_members"), 5);
+    assert.equal(getPlanLimit(PRO_FEATURES, "team_members"), 10);
   });
 
   it("réserve l'audit et 20 membres à Business", () => {
@@ -194,13 +194,13 @@ describe("downgrade sans suppression", () => {
     assert.ok(products);
     assert.equal(products.blocked, true);
     assert.equal(products.used, 800);
-    assert.equal(products.limit, 100);
+    assert.equal(products.limit, 300);
     // Les 800 produits restent ; seule la création est bloquée.
     assert.equal(checkPlanLimit(FREE_FEATURES, "products", 800).allowed, false);
   });
 
   it("signale l'approche à 80 %", () => {
-    const meters = usageMeters(bundleFor(FREE_FEATURES, { products: 80 }));
+    const meters = usageMeters(bundleFor(FREE_FEATURES, { products: 240 }));
     const products = meters.find((m) => m.key === "products");
     assert.equal(products?.warning, true);
     assert.equal(products?.blocked, false);
