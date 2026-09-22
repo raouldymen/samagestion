@@ -1,12 +1,38 @@
 /**
  * Indicateurs prêts pour un futur /admin/payments — pas d'UI commerçant.
  */
+export type AdminPlanSlug = "free" | "pro" | "business";
+
+export type AdminSubscriptionRow = {
+  businessId: string;
+  businessName: string;
+  plan: AdminPlanSlug;
+  planName: string;
+  status: string;
+  periodEnd: string | null;
+};
+
 export type RevenueSnapshot = {
   mrr: number;
   arr: number;
   paidSubscribers: number;
   freeSubscribers: number;
+  proSubscribers: number;
+  businessSubscribers: number;
+  subscriptions: AdminSubscriptionRow[];
 };
+
+export function emptyRevenueSnapshot(): RevenueSnapshot {
+  return {
+    mrr: 0,
+    arr: 0,
+    paidSubscribers: 0,
+    freeSubscribers: 0,
+    proSubscribers: 0,
+    businessSubscribers: 0,
+    subscriptions: [],
+  };
+}
 
 export function computeConversionRate(free: number, paid: number) {
   const total = free + paid;
