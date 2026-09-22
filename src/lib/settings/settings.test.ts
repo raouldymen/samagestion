@@ -15,6 +15,7 @@ import {
   logoStoragePath,
   sanitizeDocumentPrefix,
 } from "@/lib/settings/constants";
+import { memberIdsFromDeleteResult } from "@/lib/settings/delete-members";
 import { validateBusinessProfile, validateDeleteBusinessForm, validateReceiptSettingsForm } from "@/lib/settings/validation";
 import { hasPermission } from "@/lib/auth/permissions";
 import type { ReceiptView } from "@/types/receipts";
@@ -172,6 +173,11 @@ describe("suppression du commerce", () => {
     const ok = validateDeleteBusinessForm(form);
     assert.equal(ok.error, null);
     assert.equal(ok.values.password, "secret123");
+  });
+
+  it("lit les identifiants de membres renvoyés par la suppression", () => {
+    assert.deepEqual(memberIdsFromDeleteResult({ memberIds: ["a", "b"] }), ["a", "b"]);
+    assert.deepEqual(memberIdsFromDeleteResult(null), []);
   });
 });
 

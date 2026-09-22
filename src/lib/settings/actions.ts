@@ -10,6 +10,7 @@ import {
   BUSINESS_LOGO_MAX_BYTES,
   logoStoragePath,
 } from "@/lib/settings/constants";
+import { deleteOrphanedMemberAccounts, memberIdsFromDeleteResult } from "@/lib/settings/delete-members";
 import { mapSettingsError } from "@/lib/settings/errors";
 import {
   validateBusinessProfile,
@@ -298,18 +299,33 @@ export async function deleteBusinessAction(
     }
 
     const logoPath = logoStoragePath(session.business.logoUrl);
-    const { error: rpcError } = await supabase.rpc("delete_own_business");
+    const { data: members } = await supabase
+      .from("business_members")
+      .select("user_id")
+      .eq("business_id", session.businessId);
+    const { data, error: rpcError } = await supabase.rpc("delete_own_business");
 
     if (rpcError) {
       return { error: mapSettingsError(rpcError) };
     }
+
+    const memberIds = [
+      ...memberIdsFromDeleteResult(data),
+      ...(members ?? []).map((row) => row.user_id),
+    ];
+    await deleteOrphanedMemberAccounts(memberIds);
 
     if (logoPath) {
       await supabase.storage.from(BUSINESS_LOGO_BUCKET).remove([logoPath]);
     }
 
     revalidateSettings();
-    redirect("/onboarding");
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Le compte propriétaire a pu être déjà supprimé.
+    }
+    redirect("/login");
   } catch (caught) {
     if (isRedirectError(caught)) {
       throw caught;

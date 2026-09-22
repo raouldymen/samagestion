@@ -1633,7 +1633,7 @@ export type Database = {
       };
       delete_own_business: {
         Args: Record<PropertyKey, never>;
-        Returns: undefined;
+        Returns: Json;
       };
       set_business_logo: {
         Args: { p_logo_url: string | null };
