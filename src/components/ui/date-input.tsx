@@ -67,7 +67,7 @@ export function DateInput({
             aria-describedby={error ? errorId : hintId}
             className={cn(
               "h-12 w-full rounded-lg border bg-card py-0 pr-3 pl-10 text-base text-foreground shadow-sm",
-              "[color-scheme:light]",
+              "[color-scheme:inherit]",
               "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               error ? "border-danger" : "border-border hover:border-slate-300",
               className,

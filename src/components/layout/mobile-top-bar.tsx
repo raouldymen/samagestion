@@ -2,6 +2,7 @@
 
 import { Avatar } from "@/components/ui/avatar";
 import { Logo } from "@/components/ui/logo";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useUser } from "@/hooks/use-user";
 
@@ -12,6 +13,7 @@ export function MobileTopBar() {
     <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-sm print:hidden lg:hidden">
       <Logo href="/dashboard" size="sm" />
       <div className="flex items-center gap-1">
+        <ThemeToggle />
         <NotificationBell />
         <Avatar name={user.fullName} size="sm" />
       </div>

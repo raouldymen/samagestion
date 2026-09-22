@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import { NativeAuthBridge } from "@/components/mobile/native-auth-bridge";
 import { PwaRegistration } from "@/components/mobile/pwa-registration";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { THEME_INIT_SCRIPT } from "@/lib/theme/theme";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -42,11 +45,16 @@ export const viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fr" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="fr" className={`${geistSans.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full bg-background font-sans text-foreground">
-        {children}
-        <NativeAuthBridge />
-        <PwaRegistration />
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
+        <ThemeProvider>
+          {children}
+          <NativeAuthBridge />
+          <PwaRegistration />
+        </ThemeProvider>
       </body>
     </html>
   );

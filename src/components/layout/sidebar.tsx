@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Logo } from "@/components/ui/logo";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useBusiness } from "@/hooks/use-business";
 import { useUser } from "@/hooks/use-user";
@@ -22,7 +23,10 @@ export function Sidebar() {
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[var(--sidebar-width)] flex-col border-r border-border bg-sidebar print:hidden lg:flex">
       <div className="flex h-16 items-center justify-between gap-2 px-5">
         <Logo href="/dashboard" />
-        <NotificationBell />
+        <div className="flex items-center">
+          <ThemeToggle />
+          <NotificationBell />
+        </div>
       </div>
       <p className="truncate px-5 pb-3 text-xs text-muted-foreground">{business.name}</p>
 
@@ -42,7 +46,7 @@ export function Sidebar() {
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 active
                   ? "bg-primary-soft text-primary"
-                  : "text-slate-600 hover:bg-muted hover:text-foreground",
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
               <Icon className="size-5 shrink-0" aria-hidden="true" />
@@ -67,7 +71,7 @@ export function Sidebar() {
         >
           <button
             type="submit"
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-slate-600 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <LogOut className="size-4" aria-hidden="true" />
             Déconnexion

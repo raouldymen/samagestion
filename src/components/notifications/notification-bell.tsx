@@ -34,7 +34,7 @@ export function NotificationBell() {
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} non lues` : "Notifications"}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="relative inline-flex size-10 items-center justify-center rounded-lg text-slate-600 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="relative inline-flex size-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Bell className="size-5" aria-hidden="true" />
         <NotificationBadge count={unreadCount} />
