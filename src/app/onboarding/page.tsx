@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { OnboardingForm } from "@/components/onboarding/onboarding-form";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
 import { isPlatformAdmin } from "@/lib/admin/access";
+import { signOut } from "@/lib/auth/actions";
 
 export const metadata: Metadata = {
   title: "Configurer votre activité",
@@ -27,6 +29,11 @@ export default async function OnboardingPage() {
         </p>
       </div>
       <OnboardingForm />
+      <form action={signOut} className="mt-3">
+        <Button type="submit" variant="outline" size="lg" className="w-full">
+          Retour
+        </Button>
+      </form>
     </Card>
   );
 }
