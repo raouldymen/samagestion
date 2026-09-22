@@ -111,7 +111,8 @@ export function CashierSaleQueue({
             className="flex w-full items-center justify-between gap-3 py-2 text-left text-sm hover:bg-muted/60"
           >
             <div className="min-w-0">
-              <p className="font-medium">{sale.saleNumber} · {sale.sellerName}</p>
+              <p className="font-medium">{sale.saleNumber}</p>
+              <p className="text-xs text-muted-foreground">Vendeur : {sale.sellerName}</p>
               <p className="text-xs text-muted-foreground">{sale.paymentStatus === "paid" ? "Payée" : sale.paymentStatus === "partial" ? "Partiellement payée" : "Impayée"}</p>
             </div>
             <span className="shrink-0 font-semibold">{formatFcfaAbsolute(sale.amountPaid)}</span>
@@ -180,7 +181,7 @@ function CashierSaleCard({ sale, onCompleted }: { sale: CashierQueuedSale; onCom
     <Card className="p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-semibold">Vente de {sale.sellerName}</p>
+          <p className="font-semibold">Vendeur : {sale.sellerName}</p>
           <p className="text-sm text-muted-foreground">{formatDateTime(sale.createdAt)} · {sale.customerName ?? "Client comptoir"}{sale.customerPhone ? ` · ${sale.customerPhone}` : ""}</p>
         </div>
         <p className="text-lg font-semibold">{formatFcfaAbsolute(total)}</p>

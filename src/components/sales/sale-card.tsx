@@ -20,6 +20,7 @@ export function SaleCard({ sale, canManagePending = false }: { sale: SaleListIte
       <p className="mt-1 text-sm text-muted-foreground">
         {sale.customerName ?? "Aucun client"} · {sale.awaitingCashier ? "À encaisser à la caisse" : paymentMethodLabel(sale.paymentMethod)}
       </p>
+      <p className="mt-1 text-sm text-muted-foreground">Vendeur : {sale.sellerName}</p>
     </>
   );
 
