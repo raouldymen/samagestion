@@ -25,5 +25,13 @@ export function mapAdminError(error: unknown) {
     return "Le compte super admin n'est pas configuré pour modifier les abonnements.";
   }
 
+  if (/FORBIDDEN/i.test(message)) {
+    return "Vous n'avez pas l'autorisation de modifier cet abonnement.";
+  }
+
+  if (/duplicate|unique/i.test(message)) {
+    return "Impossible de mettre à jour cette formule. Réessayez.";
+  }
+
   return "Une erreur est survenue. Veuillez réessayer.";
 }

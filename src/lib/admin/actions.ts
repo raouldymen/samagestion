@@ -38,13 +38,25 @@ export async function adminSetBusinessPlanAction(
 
   try {
     await requirePlatformAdmin();
-    const service = createServiceClient();
-    const { error } = await service.rpc("admin_set_business_plan", {
+    const supabase = await createClient();
+    const adminId = await adminUserId();
+    let { error } = await supabase.rpc("admin_set_business_plan", {
       p_business_id: businessId,
       p_plan_slug: plan,
       p_period_days: periodDays,
-      p_admin_user_id: await adminUserId(),
+      p_admin_user_id: adminId,
     });
+
+    if (error) {
+      const service = createServiceClient();
+      const retry = await service.rpc("admin_set_business_plan", {
+        p_business_id: businessId,
+        p_plan_slug: plan,
+        p_period_days: periodDays,
+        p_admin_user_id: adminId,
+      });
+      error = retry.error;
+    }
 
     if (error) {
       return { error: mapAdminError(error) };
@@ -70,12 +82,23 @@ export async function adminExtendTrialAction(
 
   try {
     await requirePlatformAdmin();
-    const service = createServiceClient();
-    const { error } = await service.rpc("admin_extend_business_trial", {
+    const supabase = await createClient();
+    const adminId = await adminUserId();
+    let { error } = await supabase.rpc("admin_extend_business_trial", {
       p_business_id: businessId,
       p_extra_days: extraDays,
-      p_admin_user_id: await adminUserId(),
+      p_admin_user_id: adminId,
     });
+
+    if (error) {
+      const service = createServiceClient();
+      const retry = await service.rpc("admin_extend_business_trial", {
+        p_business_id: businessId,
+        p_extra_days: extraDays,
+        p_admin_user_id: adminId,
+      });
+      error = retry.error;
+    }
 
     if (error) {
       return { error: mapAdminError(error) };

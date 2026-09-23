@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { adminExtendTrialAction, adminSetBusinessPlanAction } from "@/lib/admin/actions";
 import { ADMIN_PLAN_PERIOD_DAYS, ADMIN_TRIAL_DAYS } from "@/lib/admin/validation";
 import type { AdminPaymentRow, AdminPlanSlug, AdminSubscriptionRow } from "@/lib/payments/metrics";
@@ -190,7 +191,14 @@ function AdminPlanDialog({
   business: AdminSubscriptionRow | null;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(adminSetBusinessPlanAction, { error: null });
+
+  useEffect(() => {
+    if (state.success) {
+      router.refresh();
+    }
+  }, [state.success, router]);
 
   return (
     <Dialog open={Boolean(business)} title="Forcer une formule" onClose={onClose}>
@@ -237,7 +245,14 @@ function AdminTrialDialog({
   business: AdminSubscriptionRow | null;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(adminExtendTrialAction, { error: null });
+
+  useEffect(() => {
+    if (state.success) {
+      router.refresh();
+    }
+  }, [state.success, router]);
 
   return (
     <Dialog open={Boolean(business)} title="Prolonger l’essai" onClose={onClose}>
