@@ -1,16 +1,31 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { signUp } from "@/lib/auth/actions";
+import { passwordMismatchMessage } from "@/lib/auth/password-mismatch";
 
 export function RegisterForm() {
   const [state, formAction, pending] = useActionState(signUp, { error: null });
+  const [mismatch, setMismatch] = useState<string | null>(null);
+  const values = state.values ?? {};
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      action={formAction}
+      className="flex flex-col gap-4"
+      onSubmit={(event) => {
+        const message = passwordMismatchMessage(event.currentTarget);
+        if (message) {
+          event.preventDefault();
+          setMismatch(message);
+          return;
+        }
+        setMismatch(null);
+      }}
+    >
       <Input
         id="fullName"
         name="fullName"
@@ -19,6 +34,7 @@ export function RegisterForm() {
         autoComplete="name"
         required
         placeholder="Aminata Diop"
+        defaultValue={values.fullName ?? ""}
         error={state.fieldErrors?.fullName}
       />
       <Input
@@ -30,6 +46,7 @@ export function RegisterForm() {
         inputMode="tel"
         required
         placeholder="+221 77 000 00 00"
+        defaultValue={values.phone ?? ""}
         error={state.fieldErrors?.phone}
       />
       <Input
@@ -41,6 +58,7 @@ export function RegisterForm() {
         inputMode="email"
         required
         placeholder="vous@exemple.sn"
+        defaultValue={values.email ?? state.email ?? ""}
         error={state.fieldErrors?.email}
       />
       <PasswordInput
@@ -61,9 +79,9 @@ export function RegisterForm() {
         required
         minLength={8}
         placeholder="Répétez le mot de passe"
-        error={state.fieldErrors?.confirmPassword}
+        error={mismatch ?? state.fieldErrors?.confirmPassword}
       />
-      {state.error ? (
+      {state.error && !mismatch ? (
         <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>

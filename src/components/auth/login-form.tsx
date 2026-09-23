@@ -58,6 +58,8 @@ export function LoginForm({ next = "" }: { next?: string }) {
         inputMode="email"
         required
         placeholder="vous@exemple.sn"
+        defaultValue={state.email ?? ""}
+        key={state.email ? `email-${state.email}` : "email"}
         error={state.fieldErrors?.email}
       />
       <PasswordInput

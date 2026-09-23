@@ -37,23 +37,29 @@ async function enforceAuthRateLimit(
   return null;
 }
 
+function submittedEmail(formData: FormData) {
+  return String(formData.get("email") ?? "").trim();
+}
+
 export async function signIn(
   _prev: AuthResult,
   formData: FormData,
 ): Promise<AuthResult> {
+  const email = submittedEmail(formData);
+
   if (!isSupabaseConfigured()) {
-    return { error: AUTH_NOT_CONFIGURED };
+    return { error: AUTH_NOT_CONFIGURED, email };
   }
 
   const limited = await enforceAuthRateLimit("login");
   if (limited) {
-    return limited;
+    return { ...limited, email };
   }
 
   const { values, fieldErrors, error } = validateLogin(formData);
 
   if (error) {
-    return { error, fieldErrors };
+    return { error, fieldErrors, email };
   }
 
   try {
@@ -64,7 +70,7 @@ export async function signIn(
     });
 
     if (signInError) {
-      return { error: mapAuthError(signInError) };
+      return { error: mapAuthError(signInError), email };
     }
 
     const userId = data.user.id;
@@ -85,46 +91,56 @@ export async function signIn(
       throw caught;
     }
 
-    return { error: mapAuthError(caught) };
+    return { error: mapAuthError(caught), email };
   }
+}
+
+function submittedRegisterValues(formData: FormData) {
+  return {
+    fullName: String(formData.get("fullName") ?? "").trim(),
+    phone: String(formData.get("phone") ?? "").trim(),
+    email: submittedEmail(formData),
+  };
 }
 
 export async function signUp(
   _prev: AuthResult,
   formData: FormData,
 ): Promise<AuthResult> {
+  const values = submittedRegisterValues(formData);
+
   if (!isSupabaseConfigured()) {
-    return { error: AUTH_NOT_CONFIGURED };
+    return { error: AUTH_NOT_CONFIGURED, values, email: values.email };
   }
 
   const limited = await enforceAuthRateLimit("signup");
   if (limited) {
-    return limited;
+    return { ...limited, values, email: values.email };
   }
 
-  const { values, fieldErrors, error } = validateRegister(formData);
+  const parsed = validateRegister(formData);
 
-  if (error) {
-    return { error, fieldErrors };
+  if (parsed.error) {
+    return { error: parsed.error, fieldErrors: parsed.fieldErrors, values, email: values.email };
   }
 
   try {
     const supabase = await createClient();
     const origin = await getRequestOrigin();
     const { data, error: signUpError } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
+      email: parsed.values.email,
+      password: parsed.values.password,
       options: {
         emailRedirectTo: `${origin}/auth/callback`,
         data: {
-          full_name: values.fullName,
-          phone: values.phone,
+          full_name: parsed.values.fullName,
+          phone: parsed.values.phone,
         },
       },
     });
 
     if (signUpError) {
-      return { error: mapAuthError(signUpError) };
+      return { error: mapAuthError(signUpError), values, email: values.email };
     }
 
     if (data.session) {
@@ -142,7 +158,7 @@ export async function signUp(
       throw caught;
     }
 
-    return { error: mapAuthError(caught) };
+    return { error: mapAuthError(caught), values, email: values.email };
   }
 }
 

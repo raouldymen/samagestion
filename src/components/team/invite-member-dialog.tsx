@@ -7,6 +7,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Select } from "@/components/ui/select";
+import { passwordMismatchMessage } from "@/lib/auth/password-mismatch";
 import { ASSIGNABLE_ROLES } from "@/lib/auth/permissions";
 import { inviteMemberAction } from "@/lib/team/actions";
 import { ROLE_LABELS } from "@/lib/team/labels";
@@ -14,6 +15,7 @@ import { ROLE_LABELS } from "@/lib/team/labels";
 export function InviteMemberDialog() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [mismatch, setMismatch] = useState<string | null>(null);
   const [state, formAction, pending] = useActionState(inviteMemberAction, { error: null });
 
   useEffect(() => {
@@ -41,7 +43,19 @@ export function InviteMemberDialog() {
             </div>
           </div>
         ) : (
-          <form action={formAction} className="flex flex-col gap-4">
+          <form
+            action={formAction}
+            className="flex flex-col gap-4"
+            onSubmit={(event) => {
+              const message = passwordMismatchMessage(event.currentTarget);
+              if (message) {
+                event.preventDefault();
+                setMismatch(message);
+                return;
+              }
+              setMismatch(null);
+            }}
+          >
             <Input
               id="fullName"
               name="fullName"
@@ -92,7 +106,7 @@ export function InviteMemberDialog() {
               autoComplete="new-password"
               required
               minLength={8}
-              error={state.fieldErrors?.confirmPassword}
+              error={mismatch ?? state.fieldErrors?.confirmPassword}
             />
             <p className="text-xs text-muted-foreground">
               Le membre se connecte sur l&apos;application avec cet e-mail et ce mot de passe. Il

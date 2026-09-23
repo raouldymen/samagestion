@@ -77,6 +77,8 @@ export type AuthResult = {
   success?: boolean;
   message?: string;
   saleId?: string;
+  email?: string;
+  values?: Record<string, string>;
 };
 
 export type {
