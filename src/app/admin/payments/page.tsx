@@ -4,6 +4,8 @@ import { getPlatformRevenueSnapshot } from "@/lib/admin/metrics";
 import { listAdminBusinesses, listAdminPayments } from "@/lib/admin/queries";
 import { formatFcfaAbsolute } from "@/lib/utils/format";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Admin paiements",
 };

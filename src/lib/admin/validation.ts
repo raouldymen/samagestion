@@ -14,7 +14,7 @@ export function parseAdminPeriodDays(value: string, plan: AdminPlanSlug) {
   }
 
   const days = Number(value);
-  if (!ADMIN_PLAN_PERIOD_DAYS.includes(days as (typeof ADMIN_PLAN_PERIOD_DAYS)[number])) {
+  if (!Number.isInteger(days) || days < 1 || days > 365) {
     return null;
   }
 

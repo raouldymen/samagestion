@@ -13,7 +13,10 @@ describe("actions super admin", () => {
   it("limite la durée d'un plan forcé", () => {
     assert.equal(parseAdminPeriodDays("30", "pro"), 30);
     assert.equal(parseAdminPeriodDays("90", "business"), 90);
-    assert.equal(parseAdminPeriodDays("12", "pro"), null);
+    assert.equal(parseAdminPeriodDays("12", "pro"), 12);
+    assert.equal(parseAdminPeriodDays("365", "pro"), 365);
+    assert.equal(parseAdminPeriodDays("0", "pro"), null);
+    assert.equal(parseAdminPeriodDays("366", "pro"), null);
     assert.equal(parseAdminPeriodDays("ignored", "free"), 30);
   });
 

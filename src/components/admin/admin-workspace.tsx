@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { formatDateTime, formatFcfaAbsolute } from "@/lib/utils/format";
+import { formatDate, formatDateTime, formatFcfaAbsolute } from "@/lib/utils/format";
 
 const PLAN_LABELS: Record<AdminPlanSlug, string> = {
   free: "Gratuit",
@@ -109,8 +109,8 @@ export function AdminWorkspace({
                   <p className="font-medium">{row.businessName}</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
                     {row.businessEmail ?? "Sans e-mail"} · {STATUS_LABELS[row.status] ?? row.status}
-                    {row.status === "trialing" && row.trialEnd ? ` jusqu’au ${formatDateTime(row.trialEnd)}` : ""}
-                    {row.status !== "trialing" && row.periodEnd ? ` · jusqu’au ${formatDateTime(row.periodEnd)}` : ""}
+                    {row.status === "trialing" && row.trialEnd ? ` jusqu’au ${formatDate(row.trialEnd)}` : ""}
+                    {row.status !== "trialing" && row.periodEnd ? ` · jusqu’au ${formatDate(row.periodEnd)}` : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -192,6 +192,14 @@ function AdminPlanDialog({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const [plan, setPlan] = useState<AdminPlanSlug>(business?.plan ?? "free");
+  const [periodDays, setPeriodDays] = useState(() => {
+    if (business?.plan !== "free" && business?.periodEnd) {
+      const days = Math.round((new Date(business.periodEnd).getTime() - Date.now()) / 86_400_000);
+      if (days >= 1 && days <= 365) return days;
+    }
+    return 30;
+  });
   const [state, formAction, pending] = useActionState(adminSetBusinessPlanAction, { error: null });
 
   useEffect(() => {
@@ -199,6 +207,10 @@ function AdminPlanDialog({
       router.refresh();
     }
   }, [state.success, router]);
+
+  const previewEnd = plan === "free"
+    ? null
+    : new Date(Date.now() + periodDays * 86_400_000).toISOString();
 
   return (
     <Dialog open={Boolean(business)} title="Forcer une formule" onClose={onClose}>
@@ -211,21 +223,52 @@ function AdminPlanDialog({
         ) : (
           <form action={formAction} className="grid gap-4">
             <input type="hidden" name="businessId" value={business.businessId} />
+            <input type="hidden" name="plan" value={plan} />
+            <input type="hidden" name="periodDays" value={String(periodDays)} />
             <p className="text-sm text-muted-foreground">
               {business.businessName} passe immédiatement sur la formule choisie.
             </p>
-            <Select id={`admin-plan-${business.businessId}`} name="plan" label="Formule" defaultValue={business.plan} required>
+            <Select
+              id={`admin-plan-${business.businessId}`}
+              label="Formule"
+              value={plan}
+              onChange={(event) => setPlan(event.target.value as AdminPlanSlug)}
+              required
+            >
               <option value="free">Gratuit</option>
               <option value="pro">Pro</option>
               <option value="business">Business</option>
             </Select>
-            <Select id={`admin-period-${business.businessId}`} name="periodDays" label="Durée (plans payants)" defaultValue="30">
-              {ADMIN_PLAN_PERIOD_DAYS.map((days) => (
-                <option key={days} value={days}>
-                  {days} jours
-                </option>
-              ))}
-            </Select>
+            {plan !== "free" ? (
+              <div className="grid gap-2">
+                <Input
+                  id={`admin-period-${business.businessId}`}
+                  label="Durée (jours)"
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={periodDays}
+                  onChange={(event) => setPeriodDays(Number(event.target.value) || 0)}
+                  required
+                />
+                <div className="flex flex-wrap gap-2">
+                  {ADMIN_PLAN_PERIOD_DAYS.map((days) => (
+                    <Button
+                      key={days}
+                      type="button"
+                      size="sm"
+                      variant={periodDays === days ? "secondary" : "outline"}
+                      onClick={() => setPeriodDays(days)}
+                    >
+                      {days} jours
+                    </Button>
+                  ))}
+                </div>
+                {previewEnd ? (
+                  <p className="text-sm text-muted-foreground">Jusqu’au {formatDate(previewEnd)}</p>
+                ) : null}
+              </div>
+            ) : null}
             {state.error ? <p role="alert" className="text-sm text-danger">{state.error}</p> : null}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
